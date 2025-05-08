@@ -5,9 +5,13 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import connectDB from './config/database';
 
 // 環境変数を読み込む
 dotenv.config();
+
+// データベース接続
+connectDB();
 
 // Expressアプリケーションの初期化
 const app = express();
