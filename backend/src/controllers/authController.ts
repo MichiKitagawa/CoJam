@@ -43,42 +43,83 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// ログイン
-export const login = async (req: Request, res: Response): Promise<void> => {
+// ユーザーログイン
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    // ユーザー検索
+    // ユーザーの検索
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(401).json({ message: 'メールアドレスまたはパスワードが正しくありません' });
+      res.status(401).json({ message: 'メールアドレスまたはパスワードが無効です' });
       return;
     }
 
-    // パスワード検証
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      res.status(401).json({ message: 'メールアドレスまたはパスワードが正しくありません' });
+    // パスワードの検証
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      res.status(401).json({ message: 'メールアドレスまたはパスワードが無効です' });
       return;
     }
 
     // JWT生成
     const token = authConfig.generateToken(user);
 
+    // 応答の返却
     res.json({
+      message: 'ログインに成功しました',
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profileImage: user.profileImage,
+        bio: user.bio
       },
       token,
       expiresIn: authConfig.JWT_EXPIRES_IN
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'ログイン中にエラーが発生しました' });
+    res.status(500).json({ message: 'ログイン処理中にエラーが発生しました' });
   }
+};
+
+// セッション更新（トークン再発行）
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // ユーザーIDは認証ミドルウェアから取得
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: '認証が必要です' });
+      return;
+    }
+
+    // ユーザー情報の取得
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'ユーザーが見つかりません' });
+      return;
+    }
+
+    // 新しいトークンの発行
+    const token = authConfig.generateToken(user);
+
+    res.json({
+      message: 'トークンが更新されました',
+      token,
+      expiresIn: authConfig.JWT_EXPIRES_IN
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ message: 'トークン更新中にエラーが発生しました' });
+  }
+};
+
+// ログアウト処理
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  // クライアント側でトークンを破棄するため、サーバー側での特別な処理は不要
+  res.json({ message: 'ログアウトしました' });
 };
 
 // 現在のユーザー情報取得
@@ -113,6 +154,8 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 
 export default {
   register,
-  login,
+  loginUser,
+  refreshToken,
+  logoutUser,
   getCurrentUser
 }; 
