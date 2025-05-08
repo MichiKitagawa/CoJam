@@ -1,12 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-// JWTペイロードの型定義
-interface JwtPayload {
-  id: string;
-  email: string;
-  role: string;
-}
+import authConfig from '../config/auth';
+import type { JwtPayload } from '../config/auth';
 
 // Expressのリクエスト型を拡張
 declare global {
@@ -27,28 +22,42 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
     return;
   }
 
-  // "Bearer [token]"形式からトークン部分を取得
-  const token = authHeader.split(' ')[1];
-  
-  if (!token) {
-    res.status(401).json({ message: '認証トークンが不正です' });
-    return;
-  }
+  const token = authHeader.split(' ')[1]; // "Bearer <token>"の形式を想定
 
   try {
     // トークンを検証
-    const decoded = jwt.verify(
-      token, 
-      process.env.JWT_SECRET || 'your_jwt_secret'
-    ) as JwtPayload;
-    
-    // デコードされたユーザー情報をリクエストオブジェクトに追加
+    const decoded = jwt.verify(token, authConfig.JWT_SECRET) as JwtPayload;
     req.user = decoded;
     next();
   } catch (error) {
-    console.error('Token verification error:', error);
-    res.status(403).json({ message: '無効または期限切れのトークンです' });
+    res.status(403).json({ message: '無効なトークンです' });
   }
 };
 
-export default { authenticateJWT }; 
+// 特定のロールを持つユーザーのみアクセスを許可するミドルウェア
+export const authorizeRole = (roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ message: '認証が必要です' });
+      return;
+    }
+
+    if (!roles.includes(req.user.role)) {
+      res.status(403).json({ message: 'このアクションを実行する権限がありません' });
+      return;
+    }
+
+    next();
+  };
+};
+
+// 演者のみアクセスを許可するミドルウェア
+export const requirePerformer = (req: Request, res: Response, next: NextFunction): void => {
+  authorizeRole(['performer'])(req, res, next);
+};
+
+export default {
+  authenticateJWT,
+  authorizeRole,
+  requirePerformer
+}; 

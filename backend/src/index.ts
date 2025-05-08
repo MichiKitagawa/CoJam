@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/database';
 import userRoutes from './routes/userRoutes';
+import authRoutes from './routes/authRoutes';
 
 // 環境変数を読み込む
 dotenv.config();
@@ -37,8 +38,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'CoJam API サーバーが稼働中です' });
 });
 
-// ユーザールーターを統合
+// ルーターを統合
 app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 
 // WebSocketイベント
 io.on('connection', (socket) => {
