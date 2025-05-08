@@ -1,0 +1,39 @@
+# 依存パッケージ
+node_modules
+.pnp
+.pnp.js
+
+# ビルドファイル
+/frontend/.next/
+/backend/dist/
+/infrastructure/.terraform/
+*.tsbuildinfo
+
+# 環境変数
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ログ
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# エディタ設定
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# テスト関連
+/coverage
+
+# DBデータ
+/mongo-data
+/redis-data 

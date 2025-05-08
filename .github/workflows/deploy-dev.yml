@@ -1,0 +1,21 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  deploy:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_KEY }}
+          
+      - name: Deploy to Dev Server
+        run: |
+          ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} "cd ${{ secrets.DEV_SERVER_PATH }} && git pull && docker-compose down && docker-compose up -d --build" 
