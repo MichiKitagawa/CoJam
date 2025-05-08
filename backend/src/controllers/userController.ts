@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import userService from '../services/userService';
 import { User } from '../models/index';
 import authConfig from '../config/auth';
+import fs from 'fs';
+import path from 'path';
 
 // ユーザープロフィール取得
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
@@ -32,6 +34,39 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
   }
 };
 
+// 自分のプロフィール取得
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: '認証が必要です' });
+      return;
+    }
+
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'ユーザーが見つかりません' });
+      return;
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: 'プロフィール取得中にエラーが発生しました' });
+  }
+};
+
 // ユーザープロフィール更新
 export const updateProfile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -42,13 +77,17 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       return;
     }
     
-    const { name, profileImage, bio } = req.body;
+    const { name, bio } = req.body;
+    const updateData: { name?: string; bio?: string } = {};
+
+    if (name) updateData.name = name;
+    if (bio !== undefined) updateData.bio = bio;
     
-    const updatedUser = await userService.updateUserProfile(userId, {
-      name,
-      profileImage,
-      bio
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password');
     
     if (!updatedUser) {
       res.status(404).json({ message: 'ユーザーが見つかりません' });
@@ -66,10 +105,64 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       updatedAt: updatedUser.updatedAt
     };
     
-    res.json({ user: userProfile });
+    res.json({ 
+      message: 'プロフィールが更新されました',
+      user: userProfile 
+    });
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ message: 'プロフィール更新中にエラーが発生しました' });
+  }
+};
+
+// プロフィール画像アップロード
+export const uploadProfileImage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: '認証が必要です' });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ message: '画像ファイルが必要です' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'ユーザーが見つかりません' });
+      return;
+    }
+
+    // 古い画像ファイルの削除（存在する場合）
+    if (user.profileImage) {
+      const oldImagePath = path.join(__dirname, '../../uploads/profile', path.basename(user.profileImage));
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // 相対URLパスでDBに保存
+    const imageUrl = `/uploads/profile/${req.file.filename}`;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { profileImage: imageUrl } },
+      { new: true }
+    ).select('-password');
+
+    res.json({
+      message: 'プロフィール画像がアップロードされました',
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        profileImage: updatedUser.profileImage
+      }
+    });
+  } catch (error) {
+    console.error('Profile image upload error:', error);
+    res.status(500).json({ message: '画像アップロード中にエラーが発生しました' });
   }
 };
 
@@ -183,7 +276,9 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 
 export default {
   getUserProfile,
+  getProfile,
   updateProfile,
+  uploadProfileImage,
   registerUser,
   updateUserProfile,
   getAllUsers

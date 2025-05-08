@@ -56,7 +56,30 @@ export const validateLogin = [
   }
 ];
 
+// プロフィール更新バリデーション
+export const validateProfileUpdate = [
+  // 名前のバリデーション
+  body('name')
+    .optional()
+    .isLength({ min: 2, max: 30 }).withMessage('名前は2〜30文字である必要があります'),
+
+  // 自己紹介のバリデーション
+  body('bio')
+    .optional()
+    .isLength({ max: 500 }).withMessage('自己紹介は500文字以内である必要があります'),
+
+  // バリデーション結果の確認
+  (req: Request, res: Response, next: NextFunction) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  }
+];
+
 export default {
   validateRegister,
-  validateLogin
+  validateLogin,
+  validateProfileUpdate
 }; 

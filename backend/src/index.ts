@@ -8,6 +8,7 @@ import { Server } from 'socket.io';
 import connectDB from './config/database';
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
+import path from 'path';
 
 // 環境変数を読み込む
 dotenv.config();
@@ -32,6 +33,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(morgan('dev'));
+
+// 静的ファイル提供の設定
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // APIルート
 app.get('/', (req, res) => {
