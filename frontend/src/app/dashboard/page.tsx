@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthStatus } from '../../hooks/useAuthStatus';
@@ -22,12 +23,20 @@ const DashboardPage = () => {
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">CoJam ダッシュボード</h1>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              ログアウト
-            </button>
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                プロフィール
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                ログアウト
+              </button>
+            </div>
           </div>
         </header>
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -40,6 +49,14 @@ const DashboardPage = () => {
                     ユーザータイプ: {isPerformer ? '演奏者' : isAudience ? 'リスナー' : '不明'}
                   </p>
                   <p className="text-gray-600">メールアドレス: {user.email}</p>
+                  <div className="mt-2">
+                    <Link
+                      href="/profile"
+                      className="text-sm text-indigo-600 hover:text-indigo-500"
+                    >
+                      プロフィールを編集する →
+                    </Link>
+                  </div>
                 </div>
               )}
 
