@@ -3,9 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 15, 15, 15;
+  
+  /* カスタムカラー */
+  --primary: 124, 58, 237; /* indigo-600 */
+  --primary-light: 165, 135, 248; /* indigo-400 */
+  --secondary: 168, 85, 247; /* purple-600 */
+  --accent: 139, 92, 246; /* violet-500 */
+  --dark-bg-1: 18, 18, 18; /* ベース背景色 */
+  --dark-bg-2: 24, 24, 27; /* コンポーネント背景色 */
+  --dark-bg-3: 39, 39, 42; /* 強調コンポーネント背景色 */
+  --dark-border: 63, 63, 70; /* 境界線 */
+  --dark-text-1: 255, 255, 255; /* 主要テキスト */
+  --dark-text-2: 161, 161, 170; /* 二次テキスト */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,8 +29,27 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: #f7f9fc;
+  color: rgb(var(--dark-text-1));
+  background: rgb(var(--dark-bg-1));
+}
+
+/* コンポーネント共通スタイル */
+@layer components {
+  .card-dark {
+    @apply bg-zinc-900 border border-zinc-800 shadow-lg;
+  }
+  
+  .input-dark {
+    @apply bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500 focus:border-violet-500 focus:ring-violet-500;
+  }
+  
+  .button-primary {
+    @apply bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white transition-all;
+  }
+  
+  .button-secondary {
+    @apply bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all;
+  }
 }
 
 /* DatePickerのカスタムスタイル */

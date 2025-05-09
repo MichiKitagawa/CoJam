@@ -4,7 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { format, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
-interface FormDateTimePickerProps {
+export interface FormDateTimePickerProps {
   label: string;
   value?: string;
   onChange: (dateTime: string | undefined) => void;
@@ -12,6 +12,7 @@ interface FormDateTimePickerProps {
   required?: boolean;
   minDate?: Date;
   maxDate?: Date;
+  className?: string;
 }
 
 const FormDateTimePicker: React.FC<FormDateTimePickerProps> = ({
@@ -21,7 +22,8 @@ const FormDateTimePicker: React.FC<FormDateTimePickerProps> = ({
   error,
   required = false,
   minDate,
-  maxDate
+  maxDate,
+  className = ''
 }) => {
   // 文字列からDateオブジェクトに変換
   const selectedDate = value ? parseISO(value) : null;
@@ -38,25 +40,26 @@ const FormDateTimePicker: React.FC<FormDateTimePickerProps> = ({
 
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-sm font-medium text-zinc-300 mb-1">
+        {label} {required && <span className="text-red-400">*</span>}
       </label>
-      <DatePicker
-        selected={selectedDate}
-        onChange={handleDateChange}
-        showTimeSelect
-        timeFormat="HH:mm"
-        timeIntervals={15}
-        dateFormat="yyyy/MM/dd HH:mm"
-        locale={ja}
-        minDate={minDate}
-        maxDate={maxDate}
-        placeholderText="日時を選択"
-        className={`w-full px-3 py-2 border ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-      />
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      <div className={`${error ? 'border-red-500' : 'border-zinc-700'} rounded-md focus-within:ring-2 focus-within:ring-violet-500 ${className}`}>
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleDateChange}
+          showTimeSelect
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          dateFormat="yyyy/MM/dd HH:mm"
+          locale={ja}
+          placeholderText="日時を選択"
+          minDate={minDate}
+          maxDate={maxDate}
+          className="w-full px-3 py-2 bg-zinc-800 text-zinc-100 rounded-md focus:outline-none"
+          calendarClassName="bg-zinc-800 text-zinc-100 border border-zinc-700"
+        />
+      </div>
+      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>
   );
 };

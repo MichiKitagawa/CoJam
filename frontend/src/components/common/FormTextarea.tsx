@@ -1,14 +1,15 @@
 import React from 'react';
 
-interface FormTextareaProps {
+export interface FormTextareaProps {
   label: string;
   name: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   error?: string;
   placeholder?: string;
-  required?: boolean;
   rows?: number;
+  required?: boolean;
+  className?: string;
 }
 
 const FormTextarea: React.FC<FormTextareaProps> = ({
@@ -18,13 +19,14 @@ const FormTextarea: React.FC<FormTextareaProps> = ({
   onChange,
   error,
   placeholder,
+  rows = 3,
   required = false,
-  rows = 3
+  className = ''
 }) => {
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label htmlFor={name} className="block text-sm font-medium text-zinc-300 mb-1">
+        {label} {required && <span className="text-red-400">*</span>}
       </label>
       <textarea
         id={name}
@@ -32,13 +34,13 @@ const FormTextarea: React.FC<FormTextareaProps> = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        required={required}
         rows={rows}
-        className={`w-full px-3 py-2 border ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+        required={required}
+        className={`w-full px-3 py-2 ${
+          error ? 'border-red-500' : 'border-zinc-700'
+        } rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 bg-zinc-800 text-zinc-100 ${className}`}
       />
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>
   );
 };

@@ -12,20 +12,20 @@ const RoomStatusBadge: React.FC<RoomStatusBadgeProps> = ({ status, size = 'md', 
   switch (status) {
     case 'live':
       return (
-        <span className={`bg-red-100 text-red-800 ${sizeClasses} rounded-full inline-flex items-center ${className}`}>
-          <span className="w-2 h-2 bg-red-600 rounded-full mr-1 animate-pulse"></span>
+        <span className={`bg-red-900/60 text-red-200 ${sizeClasses} rounded-full inline-flex items-center ${className}`}>
+          <span className="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
           ライブ
         </span>
       );
     case 'scheduled':
       return (
-        <span className={`bg-blue-100 text-blue-800 ${sizeClasses} rounded-full ${className}`}>
+        <span className={`bg-blue-900/60 text-blue-200 ${sizeClasses} rounded-full ${className}`}>
           予定
         </span>
       );
     case 'ended':
       return (
-        <span className={`bg-gray-100 text-gray-800 ${sizeClasses} rounded-full ${className}`}>
+        <span className={`bg-zinc-800 text-zinc-300 ${sizeClasses} rounded-full ${className}`}>
           終了
         </span>
       );

@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface FormInputProps {
+export interface FormInputProps {
   label: string;
   name: string;
   value: string | number;
@@ -12,6 +12,7 @@ interface FormInputProps {
   min?: number;
   max?: number;
   step?: number;
+  className?: string;
 }
 
 const FormInput: React.FC<FormInputProps> = ({
@@ -25,12 +26,13 @@ const FormInput: React.FC<FormInputProps> = ({
   required = false,
   min,
   max,
-  step
+  step,
+  className = ''
 }) => {
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label htmlFor={name} className="block text-sm font-medium text-zinc-300 mb-1">
+        {label} {required && <span className="text-red-400">*</span>}
       </label>
       <input
         type={type}
@@ -43,11 +45,11 @@ const FormInput: React.FC<FormInputProps> = ({
         min={min}
         max={max}
         step={step}
-        className={`w-full px-3 py-2 border ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+        className={`w-full px-3 py-2 ${
+          error ? 'border-red-500' : 'border-zinc-700'
+        } rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 bg-zinc-800 text-zinc-100 ${className}`}
       />
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>
   );
 };

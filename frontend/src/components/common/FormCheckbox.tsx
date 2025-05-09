@@ -5,7 +5,7 @@ interface FormCheckboxProps {
   name: string;
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: string;
+  description?: string;
 }
 
 const FormCheckbox: React.FC<FormCheckboxProps> = ({
@@ -13,26 +13,32 @@ const FormCheckbox: React.FC<FormCheckboxProps> = ({
   name,
   checked,
   onChange,
-  error
+  description
 }) => {
   return (
     <div className="mb-4">
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id={name}
-          name={name}
-          checked={checked}
-          onChange={onChange}
-          className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded ${
-            error ? 'border-red-500' : ''
-          }`}
-        />
-        <label htmlFor={name} className="ml-2 block text-sm text-gray-700">
-          {label}
-        </label>
+      <div className="flex items-start">
+        <div className="flex items-center h-5">
+          <input
+            id={name}
+            name={name}
+            type="checkbox"
+            checked={checked}
+            onChange={onChange}
+            className="h-4 w-4 text-violet-600 border-zinc-700 rounded bg-zinc-800 focus:ring-violet-500 focus:ring-offset-zinc-800"
+          />
+        </div>
+        <div className="ml-3">
+          <label htmlFor={name} className="text-sm font-medium text-zinc-300">
+            {label}
+          </label>
+          {description && (
+            <p className="text-xs text-zinc-500">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
     </div>
   );
 };

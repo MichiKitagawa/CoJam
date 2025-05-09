@@ -143,117 +143,132 @@ const CreateRoomPage: React.FC = () => {
   // ローディング中の表示
   if (state.loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-500">ロード中...</p>
+      <div className="flex justify-center items-center h-screen bg-zinc-950">
+        <p className="text-zinc-400">ロード中...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-8">新しいルームを作成</h1>
-      
-      {submitError && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-md mb-6">
-          <p>{submitError}</p>
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
-        {/* タイトル */}
-        <FormInput
-          label="ルームタイトル"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          error={errors.title}
-          required
-        />
+    <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-zinc-900 py-12">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 className="text-3xl font-bold mb-8 text-zinc-100">新しいルームを作成</h1>
         
-        {/* 説明 */}
-        <FormTextarea
-          label="ルーム説明"
-          name="description"
-          value={formData.description || ''}
-          onChange={handleChange}
-          error={errors.description}
-          placeholder="ルームの説明を入力してください"
-          rows={4}
-        />
-        
-        {/* 有料設定 */}
-        <FormCheckbox
-          label="有料ルームにする"
-          name="isPaid"
-          checked={formData.isPaid}
-          onChange={handleChange}
-        />
-        
-        {/* 価格（有料の場合のみ表示） */}
-        {formData.isPaid && (
-          <FormInput
-            label="価格（円）"
-            name="price"
-            type="number"
-            min={100}
-            step={100}
-            value={formData.price || ''}
-            onChange={handleChange}
-            error={errors.price}
-            required={formData.isPaid}
-          />
+        {submitError && (
+          <div className="bg-red-900/30 border-l-4 border-red-500 text-red-200 p-4 rounded-md mb-6">
+            <p>{submitError}</p>
+          </div>
         )}
         
-        {/* 最大参加者数 */}
-        <FormSelect
-          label="最大参加者数"
-          name="maxParticipants"
-          value={formData.maxParticipants.toString()}
-          onChange={handleChange}
-          error={errors.maxParticipants}
-          options={[
-            { value: '2', label: '2人' },
-            { value: '3', label: '3人' },
-            { value: '4', label: '4人' },
-            { value: '5', label: '5人' },
-            { value: '6', label: '6人' },
-            { value: '8', label: '8人' },
-            { value: '10', label: '10人' }
-          ]}
-        />
-        
-        {/* アーカイブ設定 */}
-        <FormCheckbox
-          label="セッション終了後にアーカイブを保存する"
-          name="isArchiveEnabled"
-          checked={formData.isArchiveEnabled}
-          onChange={handleChange}
-        />
-        
-        {/* 開始予定日時 */}
-        <FormDateTimePicker
-          label="開始予定日時"
-          value={formData.scheduledStartAt}
-          onChange={handleDateTimeChange}
-          error={errors.scheduledStartAt}
-          minDate={new Date()}
-        />
-        
-        {/* 送信ボタン */}
-        <div className="mt-8">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-3 px-4 rounded-md text-white font-medium ${
-              isSubmitting
-                ? 'bg-indigo-400 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            }`}
-          >
-            {isSubmitting ? 'ルーム作成中...' : 'ルームを作成'}
-          </button>
-        </div>
-      </form>
+        <form onSubmit={handleSubmit} className="bg-zinc-900 shadow-md rounded-lg p-6 border border-zinc-800">
+          {/* タイトル */}
+          <FormInput
+            label="ルームタイトル"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            error={errors.title}
+            required
+            className="input-dark"
+          />
+          
+          {/* 説明 */}
+          <FormTextarea
+            label="ルーム説明"
+            name="description"
+            value={formData.description || ''}
+            onChange={handleChange}
+            error={errors.description}
+            placeholder="ルームの説明を入力してください"
+            rows={4}
+            className="input-dark"
+          />
+          
+          {/* 有料設定 */}
+          <FormCheckbox
+            label="有料ルームにする"
+            name="isPaid"
+            checked={formData.isPaid}
+            onChange={handleChange}
+          />
+          
+          {/* 価格（有料の場合のみ表示） */}
+          {formData.isPaid && (
+            <FormInput
+              label="価格（円）"
+              name="price"
+              type="number"
+              min={100}
+              step={100}
+              value={formData.price || ''}
+              onChange={handleChange}
+              error={errors.price}
+              required={formData.isPaid}
+              className="input-dark"
+            />
+          )}
+          
+          {/* 最大参加者数 */}
+          <FormSelect
+            label="最大参加者数"
+            name="maxParticipants"
+            value={formData.maxParticipants.toString()}
+            onChange={handleChange}
+            error={errors.maxParticipants}
+            className="input-dark"
+            options={[
+              { value: '2', label: '2人' },
+              { value: '3', label: '3人' },
+              { value: '4', label: '4人' },
+              { value: '5', label: '5人' },
+              { value: '6', label: '6人' },
+              { value: '8', label: '8人' },
+              { value: '10', label: '10人' }
+            ]}
+          />
+          
+          {/* アーカイブ設定 */}
+          <FormCheckbox
+            label="セッション終了後にアーカイブを保存する"
+            name="isArchiveEnabled"
+            checked={formData.isArchiveEnabled}
+            onChange={handleChange}
+          />
+          
+          {/* 開始予定日時 */}
+          <FormDateTimePicker
+            label="開始予定日時"
+            value={formData.scheduledStartAt}
+            onChange={handleDateTimeChange}
+            error={errors.scheduledStartAt}
+            minDate={new Date()}
+            className="input-dark"
+          />
+          
+          {/* 送信ボタン */}
+          <div className="mt-8">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-3 px-4 rounded-md text-white font-medium ${
+                isSubmitting
+                  ? 'bg-violet-900/50 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700'
+              } transition-all duration-200 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500`}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  処理中...
+                </div>
+              ) : 'ルームを作成する'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

@@ -6,102 +6,133 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ 
-  currentPage, 
-  totalPages, 
-  onPageChange 
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
 }) => {
-  // ページ範囲の計算
-  const getPageRange = () => {
-    const range = [];
-    const maxPagesToShow = 5;
+  // 表示するページネーションのリンク数
+  const maxVisiblePages = 5;
+  
+  // 表示するページ番号の配列を生成
+  const getPageNumbers = () => {
+    const pageNumbers = [];
     
-    if (totalPages <= maxPagesToShow) {
-      // 総ページ数が5以下なら全ページ表示
+    if (totalPages <= maxVisiblePages) {
+      // 全ページ数が表示数以下の場合はすべて表示
       for (let i = 1; i <= totalPages; i++) {
-        range.push(i);
+        pageNumbers.push(i);
       }
     } else {
       // 現在のページを中心に表示
-      let start = Math.max(1, currentPage - 2);
-      let end = Math.min(totalPages, start + maxPagesToShow - 1);
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = startPage + maxVisiblePages - 1;
       
-      // 終端調整
-      if (end === totalPages) {
-        start = Math.max(1, end - maxPagesToShow + 1);
+      // endPageが全ページ数を超える場合は調整
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
       }
       
-      for (let i = start; i <= end; i++) {
-        range.push(i);
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
       }
       
-      // 省略記号の表示
-      if (start > 1) {
-        range.unshift(-1); // -1は省略記号を表示するための特別な値
-        range.unshift(1);
+      // 省略記号を追加
+      if (startPage > 1) {
+        pageNumbers.unshift('...');
+        pageNumbers.unshift(1);
       }
       
-      if (end < totalPages) {
-        range.push(-2); // -2は省略記号を表示するための特別な値
-        range.push(totalPages);
+      if (endPage < totalPages) {
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
       }
     }
     
-    return range;
+    return pageNumbers;
   };
-
+  
+  // 前のページに移動
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  };
+  
+  // 次のページに移動
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  };
+  
+  // ページ数が0の場合は表示しない
   if (totalPages <= 1) {
     return null;
   }
-
+  
   return (
-    <div className="flex justify-center space-x-1">
-      {/* 前のページボタン */}
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`px-3 py-1 rounded-md ${
-          currentPage === 1
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-white text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        前へ
-      </button>
-      
-      {/* ページ番号 */}
-      {getPageRange().map((page, index) => (
-        <React.Fragment key={index}>
-          {page === -1 || page === -2 ? (
-            <span className="px-3 py-1">...</span>
-          ) : (
-            <button
-              onClick={() => onPageChange(page)}
-              className={`px-3 py-1 rounded-md ${
-                page === currentPage
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {page}
-            </button>
-          )}
-        </React.Fragment>
-      ))}
-      
-      {/* 次のページボタン */}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`px-3 py-1 rounded-md ${
-          currentPage === totalPages
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-white text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        次へ
-      </button>
-    </div>
+    <nav className="flex justify-center">
+      <ul className="flex space-x-1">
+        {/* 前ページボタン */}
+        <li>
+          <button
+            onClick={goToPreviousPage}
+            disabled={currentPage === 1}
+            className={`px-3 py-2 rounded-md ${
+              currentPage === 1
+                ? 'text-zinc-500 cursor-not-allowed bg-zinc-800'
+                : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+            } transition-colors duration-150`}
+            aria-label="前のページへ"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </li>
+        
+        {/* ページ番号 */}
+        {getPageNumbers().map((page, index) => (
+          <li key={index}>
+            {page === '...' ? (
+              <span className="px-3 py-2 rounded-md text-zinc-500">...</span>
+            ) : (
+              <button
+                onClick={() => typeof page === 'number' && onPageChange(page)}
+                className={`px-3 py-2 rounded-md ${
+                  page === currentPage
+                    ? 'bg-violet-600 text-white'
+                    : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                } transition-colors duration-150`}
+                aria-current={page === currentPage ? 'page' : undefined}
+              >
+                {page}
+              </button>
+            )}
+          </li>
+        ))}
+        
+        {/* 次ページボタン */}
+        <li>
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-2 rounded-md ${
+              currentPage === totalPages
+                ? 'text-zinc-500 cursor-not-allowed bg-zinc-800'
+                : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+            } transition-colors duration-150`}
+            aria-label="次のページへ"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+    </nav>
   );
 };
 
