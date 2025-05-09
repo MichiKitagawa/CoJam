@@ -21,7 +21,7 @@ const RegisterPage = () => {
     if (state.isAuthenticated) {
       router.push('/dashboard');
     }
-  }, [state.isAuthenticated, router]);
+  }, [state.isAuthenticated]);
 
   // エラーをクリア
   useEffect(() => {

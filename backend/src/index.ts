@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+// @ts-ignore
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';

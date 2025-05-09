@@ -1,5 +1,8 @@
 version: '3.8'
 
+networks:
+  app-network:
+
 services:
   frontend:
     build:
@@ -14,6 +17,8 @@ services:
       - NODE_ENV=development
     depends_on:
       - backend
+    networks:
+      - app-network
 
   backend:
     build:
@@ -22,15 +27,18 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./backend/src/types:/app/src/types
     ports:
       - "8080:8080"
     environment:
       - NODE_ENV=development
       - MONGODB_URI=mongodb://mongo:27017/cojam
-      - CORS_ORIGIN=http://localhost:3001
+      - CORS_ORIGIN=http://localhost:3000
     depends_on:
       - mongo
       - redis
+    networks:
+      - app-network
 
   mongo:
     image: mongo:latest
@@ -38,6 +46,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - app-network
 
   redis:
     image: redis:alpine
@@ -45,6 +55,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - app-network
 
 volumes:
   mongo-data:

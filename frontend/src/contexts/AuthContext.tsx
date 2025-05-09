@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+'use client';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthState, LoginCredentials, RegisterData, User } from '../types/auth';
 import authService from '../services/authService';
@@ -123,7 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await authService.register(userData);
       localStorage.setItem('token', data.token);
       dispatch({ type: 'REGISTER_SUCCESS', payload: data.user });
-      router.push('/dashboard');
     } catch (error: any) {
       dispatch({
         type: 'REGISTER_FAILURE',
@@ -140,9 +140,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // エラークリア
-  const clearError = () => {
+  const clearError = useCallback(() => {
     dispatch({ type: 'CLEAR_ERROR' });
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ state, login, register, logout, clearError }}>
