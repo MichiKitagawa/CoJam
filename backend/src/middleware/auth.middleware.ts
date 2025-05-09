@@ -33,7 +33,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
     
     (req as AuthRequest).user = {
-      id: user._id.toString(),
+      id: user?._id ? user._id.toString() : '',
       email: user.email,
       role: user.role
     };
@@ -59,7 +59,7 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
     
     if (user) {
       (req as AuthRequest).user = {
-        id: user._id.toString(),
+        id: user?._id ? user._id.toString() : '',
         email: user.email,
         role: user.role
       };

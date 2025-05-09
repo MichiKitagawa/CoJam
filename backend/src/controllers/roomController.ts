@@ -9,9 +9,14 @@ import { isRoomFull, isRoomHost, isRoomParticipant } from '../utils/roomValidati
 
 class RoomController {
   // ルーム作成エンドポイント
-  async createRoom(req: AuthRequest, res: Response): Promise<void> {
+  async createRoom(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        res.status(401).json({ success: false, message: '認証が必要です' });
+        return;
+      }
       
       // リクエストボディのバリデーション
       const validationErrors = await validateRequest(CreateRoomDto, req.body);
@@ -129,9 +134,14 @@ class RoomController {
   }
 
   // 自分が参加中または作成したルーム一覧取得
-  async getMyRooms(req: AuthRequest, res: Response): Promise<void> {
+  async getMyRooms(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        res.status(401).json({ success: false, message: '認証が必要です' });
+        return;
+      }
       
       // クエリパラメータの取得
       const { status } = req.query;
@@ -226,9 +236,14 @@ class RoomController {
   }
 
   // ルーム参加エンドポイント
-  async joinRoom(req: AuthRequest, res: Response): Promise<void> {
+  async joinRoom(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        res.status(401).json({ success: false, message: '認証が必要です' });
+        return;
+      }
       
       // リクエストボディのバリデーション
       const validationErrors = await validateRequest(JoinRoomDto, req.body);
@@ -326,9 +341,15 @@ class RoomController {
   }
 
   // ルーム退出エンドポイント
-  async leaveRoom(req: AuthRequest, res: Response): Promise<void> {
+  async leaveRoom(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        res.status(401).json({ success: false, message: '認証が必要です' });
+        return;
+      }
+      
       const roomId = req.params.id;
       
       // IDの検証
@@ -389,10 +410,16 @@ class RoomController {
     }
   }
 
-  // ルーム終了エンドポイント
-  async endRoom(req: AuthRequest, res: Response): Promise<void> {
+  // ルーム終了エンドポイント (ホストのみ)
+  async endRoom(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        res.status(401).json({ success: false, message: '認証が必要です' });
+        return;
+      }
+      
       const roomId = req.params.id;
       
       // IDの検証

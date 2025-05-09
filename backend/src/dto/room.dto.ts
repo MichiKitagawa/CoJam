@@ -2,7 +2,7 @@ import { IsString, IsBoolean, IsNumber, IsOptional, IsDateString, Min, Max, IsEn
 
 export class CreateRoomDto {
   @IsString()
-  title: string;
+  title: string = '';
 
   @IsString()
   @IsOptional()
@@ -50,11 +50,11 @@ export class GetRoomsQueryDto {
 
   @IsOptional()
   @IsString()
-  hostUserId?: string;
+  hostUserId?: string = '';
 
   @IsOptional()
   @IsString()
-  search?: string;
+  search?: string = '';
 
   @IsOptional()
   @IsEnum(SortOrder)
@@ -74,9 +74,9 @@ export class GetRoomsQueryDto {
 export class JoinRoomDto {
   @IsString()
   @IsOptional()
-  roomId?: string;
+  roomId?: string = '';
 
   @IsString()
   @IsOptional()
-  joinToken?: string;
+  joinToken?: string = '';
 } 

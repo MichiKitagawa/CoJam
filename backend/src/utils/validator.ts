@@ -1,7 +1,7 @@
 import { validate, ValidationError } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 
-export async function validateRequest<T>(
+export async function validateRequest<T extends object>(
   dtoClass: new () => T,
   requestBody: any
 ): Promise<string[]> {
