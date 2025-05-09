@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface IRoom extends Document {
   title: string;
@@ -42,5 +43,18 @@ const RoomSchema = new Schema<IRoom>(
   },
   { timestamps: true }
 );
+
+// joinTokenをデフォルトで生成
+RoomSchema.pre('save', function(next) {
+  if (!this.joinToken) {
+    this.joinToken = uuidv4();
+  }
+  next();
+});
+
+// インデックスを追加して検索パフォーマンスを向上
+RoomSchema.index({ hostUserId: 1 });
+RoomSchema.index({ status: 1 });
+RoomSchema.index({ joinToken: 1 }, { unique: true });
 
 export default mongoose.model<IRoom>('Room', RoomSchema); 

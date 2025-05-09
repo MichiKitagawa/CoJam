@@ -22,6 +22,8 @@
   "dependencies": {
     "@types/multer": "^1.4.12",
     "bcrypt": "^5.1.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -32,7 +34,8 @@
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -43,6 +46,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.10.5",
     "@types/socket.io": "^3.0.2",
+    "@types/uuid": "^10.0.0",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "supertest": "^7.1.0",
