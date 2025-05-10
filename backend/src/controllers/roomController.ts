@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 import { Room } from '../models';
 import { CreateRoomDto, GetRoomsQueryDto, JoinRoomDto, RoomStatus, SortOrder } from '../dto/room.dto';
 import { AuthRequest } from '../middleware/auth.middleware';
@@ -33,6 +34,7 @@ class RoomController {
         hostUserId: userId,
         participants: [userId], // ホストを参加者に追加
         status: 'scheduled',
+        joinToken: uuidv4(), // joinTokenを生成して設定
       });
 
       // ルームの保存
