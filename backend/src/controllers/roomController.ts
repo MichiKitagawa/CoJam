@@ -111,13 +111,34 @@ class RoomController {
         Room.countDocuments(filter)
       ]);
 
+      // lean() を使うと仮想ゲッター id が含まれないため、手動でマッピングする
+      const mappedRooms = rooms.map(room => ({
+        id: room._id.toString(), // _id を id に変換
+        title: room.title,
+        description: room.description,
+        hostUser: room.hostUserId, // プロパティ名を hostUser に変更
+        participants: room.participants,
+        isPaid: room.isPaid,
+        price: room.price,
+        maxParticipants: room.maxParticipants,
+        isArchiveEnabled: room.isArchiveEnabled,
+        status: room.status,
+        scheduledStartAt: room.scheduledStartAt,
+        startedAt: room.startedAt,
+        endedAt: room.endedAt,
+        recordingUrl: room.recordingUrl,
+        joinToken: room.joinToken,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+      }));
+
       // レスポンスの構築
       const totalPages = Math.ceil(total / Number(limit));
       
       res.json({
         success: true,
         data: {
-          rooms,
+          rooms: mappedRooms, // マッピングしたルーム情報を返す
           pagination: {
             total,
             page: Number(page),
