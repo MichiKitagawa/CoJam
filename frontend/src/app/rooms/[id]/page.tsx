@@ -314,89 +314,75 @@ const RoomDetailPage: React.FC<PageProps> = ({ params }) => {
                 </div>
               )}
             </div>
-            
-            {/* アクションボタン */}
-            <div className="mt-8 flex flex-wrap gap-4">
-              {/* 参加ボタン */}
-              {room.userAccess?.canJoin && (
+          </div>
+        </div>
+        
+        {/* サイドバー: アクションと参加者リスト */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* アクションカード */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">アクション</h2>
+            <div className="space-y-3">
+              {/* ルームに参加ボタン (まだ参加していない場合) */}
+              {!room.userAccess?.isParticipant && room.userAccess?.canJoin && room.status !== 'ended' && (
                 <button
                   onClick={handleJoinRoom}
                   disabled={isJoining}
-                  className={`px-4 py-2 rounded-md text-white font-medium ${
-                    isJoining
-                      ? 'bg-indigo-400 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
-                  }`}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out disabled:opacity-50"
                 >
                   {isJoining ? '参加処理中...' : 'ルームに参加'}
                 </button>
               )}
-              
-              {/* セッション参加ボタン（参加者の場合） */}
-              {room.userAccess?.isParticipant && room.status === 'live' && (
+
+              {/* セッション参加ボタン (ルーム参加済みで、まだ終了していない場合) */}
+              {room.userAccess?.isParticipant && room.status !== 'ended' && (
                 <button
-                  onClick={handleJoinSession}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
+                  onClick={handleJoinSession} 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out"
                 >
-                  セッションに参加
+                  セッションに参加する (配信/視聴)
                 </button>
               )}
               
-              {/* 退出ボタン（参加者がホストではない場合） */}
-              {room.userAccess?.isParticipant && !room.userAccess?.isHost && (
+              {/* 参加トークン表示ボタン (ホストで、かつルームが予定されている場合) */}
+              {room.userAccess?.isHost && room.joinToken && room.status === 'scheduled' && (
+                  <button
+                    onClick={() => setShowJoinToken(true)}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out"
+                  >
+                    参加トークンを表示
+                  </button>
+              )}
+
+              {/* ルームから退出ボタン (参加済みで、ホストではない場合) */}
+              {room.userAccess?.isParticipant && !room.userAccess?.isHost && room.status !== 'ended' && (
                 <button
                   onClick={() => setShowLeaveConfirm(true)}
                   disabled={isLeaving}
-                  className={`px-4 py-2 rounded-md font-medium ${
-                    isLeaving
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-white text-red-600 border border-red-300 hover:bg-red-50'
-                  }`}
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out disabled:opacity-50"
                 >
-                  {isLeaving ? '退出処理中...' : 'ルームを退出'}
+                  {isLeaving ? '退出処理中...' : 'ルームから退出'}
                 </button>
               )}
-              
-              {/* ライブ開始ボタン（ホストの場合、scheduled状態） */}
-              {room.userAccess?.isHost && room.status === 'scheduled' && (
-                <button
-                  onClick={handleJoinSession}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
-                >
-                  ライブを開始
-                </button>
-              )}
-              
-              {/* セッションに戻るボタン（ホストの場合、live状態） */}
-              {room.userAccess?.isHost && room.status === 'live' && (
-                <button
-                  onClick={handleJoinSession}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
-                >
-                  セッションに戻る
-                </button>
-              )}
-              
-              {/* ルーム終了ボタン（ホストの場合、ended以外） */}
+
+              {/* ルームを終了ボタン (ホストで、まだ終了していない場合) */}
               {room.userAccess?.isHost && room.status !== 'ended' && (
                 <button
                   onClick={() => setShowEndConfirm(true)}
                   disabled={isEnding}
-                  className={`px-4 py-2 rounded-md font-medium ${
-                    isEnding
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-white text-red-600 border border-red-300 hover:bg-red-50'
-                  }`}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out disabled:opacity-50"
                 >
                   {isEnding ? '終了処理中...' : 'ルームを終了'}
                 </button>
               )}
+              
+              {room.status === 'ended' && (
+                  <p className="text-center text-gray-500 py-2">このルームは終了しました。</p>
+              )}
             </div>
           </div>
-        </div>
-        
-        {/* 参加者リスト */}
-        <div className="lg:col-span-1">
+          
+          {/* 参加者リスト */}
           <div className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">参加者 ({room.currentParticipants})</h2>
             

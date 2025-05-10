@@ -188,6 +188,7 @@ export interface RoomDetail extends Room {
   }>;
   endedAt?: string;
   recordingUrl?: string;
+  isArchiveEnabled?: boolean;
   userAccess?: {
     isHost: boolean;
     isParticipant: boolean;

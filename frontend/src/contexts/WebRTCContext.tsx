@@ -1,7 +1,9 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import SimplePeer, { Instance as PeerInstance, SignalData } from 'simple-peer';
-import useMediaStream from '../hooks/useMediaStream';
+import useMediaStream from '@/hooks/useMediaStream';
 
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 'http://localhost:8080';
 
@@ -35,7 +37,7 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     // Store it once connected.
     newSocket.on('connect', () => {
       console.log('Socket connected:', newSocket.id);
-      setMyPeerId(newSocket.id);
+      setMyPeerId(newSocket.id ?? null);
     });
 
     return () => {
@@ -131,7 +133,7 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     setPeers(prev => ({ ...prev, [targetSocketId]: peer }));
     return peer;
-  }, [localStream, socket, myPeerId, peers]); // Added peers to dependency array
+  }, [localStream, socket, myPeerId, peers]);
 
   useEffect(() => {
     if (!socket || !myPeerId) return; // Ensure myPeerId is available

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
+import { WebRTCProvider } from "../contexts/WebRTCContext";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="ja" className={`${geistSans.variable} dark scroll-smooth`}>
       <body className="font-sans antialiased bg-black text-white">
         <AuthProvider>
-          {children}
+          <WebRTCProvider>
+            {children}
+          </WebRTCProvider>
         </AuthProvider>
       </body>
     </html>
