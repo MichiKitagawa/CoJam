@@ -6,6 +6,7 @@ import Link from 'next/link';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import { useAuth } from '../../contexts/AuthContext';
 import userService, { UpdateProfileData } from '../../services/userService';
+import { ChevronLeftIcon, PencilIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 const ProfilePage = () => {
   const { state, clearError } = useAuth();
@@ -62,45 +63,46 @@ const ProfilePage = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-zinc-900">
-        <header className="bg-zinc-900 border-b border-zinc-800 shadow-md">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-indigo-500">プロフィール</h1>
+      <div className="next-section">
+        <div className="next-container">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 next-fadeIn">
+            <div>
+              <h1 className="next-heading next-gradient-text mb-2">
+                プロフィール
+              </h1>
+              <p className="next-subheading max-w-2xl">
+                アカウント情報と自己紹介を管理できます
+              </p>
+            </div>
+            
             <Link
               href="/dashboard"
-              className="flex items-center text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors"
+              className="mt-4 md:mt-0 inline-flex items-center px-4 py-2 next-button button-secondary text-sm"
             >
-              <svg className="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
+              <ChevronLeftIcon className="h-3.5 w-3.5 mr-2" />
               ダッシュボードに戻る
             </Link>
           </div>
-        </header>
-        <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="bg-zinc-900 shadow-xl rounded-xl border border-zinc-800 overflow-hidden">
+          
+          <div className="next-card overflow-hidden next-fadeIn" style={{ animationDelay: '0.1s' }}>
             {error && (
-              <div className="bg-red-900/30 border-l-4 border-red-500 text-red-200 p-4 rounded-md m-6">
+              <div className="bg-red-500/10 border-l-4 border-red-500 text-red-300 p-4 rounded-md m-6 next-fadeIn">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
+                    <XCircleIcon className="h-3.5 w-3.5 text-red-400" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">{error}</p>
+                    <p className="text-sm">{error}</p>
                   </div>
                 </div>
               </div>
             )}
             
             {successMessage && (
-              <div className="bg-green-900/30 border-l-4 border-green-500 text-green-200 p-4 rounded-md m-6">
+              <div className="bg-green-500/10 border-l-4 border-green-500 text-green-300 p-4 rounded-md m-6 next-fadeIn">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
+                    <CheckCircleIcon className="h-3.5 w-3.5 text-green-400" />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium">{successMessage}</p>
@@ -124,9 +126,7 @@ const ProfilePage = () => {
                   onClick={() => setIsEditing(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200 shadow-md transform hover:-translate-y-0.5"
                 >
-                  <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
+                  <PencilIcon className="h-3.5 w-3.5 mr-2" />
                   編集
                 </button>
               )}
@@ -221,7 +221,7 @@ const ProfilePage = () => {
                       >
                         {isLoading ? (
                           <>
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
@@ -235,7 +235,7 @@ const ProfilePage = () => {
               </div>
             )}
           </div>
-        </main>
+        </div>
       </div>
     </ProtectedRoute>
   );

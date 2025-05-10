@@ -1,67 +1,246 @@
+/* src/app/globals.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ② カスタム CSS — まずは変数定義 */
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 15, 15, 15;
-  
-  /* カスタムカラー */
-  --primary: 124, 58, 237; /* indigo-600 */
-  --primary-light: 165, 135, 248; /* indigo-400 */
-  --secondary: 168, 85, 247; /* purple-600 */
-  --accent: 139, 92, 246; /* violet-500 */
-  --dark-bg-1: 18, 18, 18; /* ベース背景色 */
-  --dark-bg-2: 24, 24, 27; /* コンポーネント背景色 */
-  --dark-bg-3: 39, 39, 42; /* 強調コンポーネント背景色 */
-  --dark-border: 63, 63, 70; /* 境界線 */
-  --dark-text-1: 255, 255, 255; /* 主要テキスト */
-  --dark-text-2: 161, 161, 170; /* 二次テキスト */
+  /* フレンドリーなカラーパレット */
+  --brand-primary: 251, 146, 60;    /* Tailwind orange-400 */
+  --brand-secondary: 52, 211, 153;  /* Tailwind emerald-400 */
+  --brand-accent: 250, 204, 21;     /* Tailwind yellow-300 */
+
+  --bg-light-primary: 249, 250, 251; /* Tailwind gray-50 */
+  --bg-light-secondary: 255, 255, 255; /* white */
+  --bg-light-tertiary: 229, 231, 235; /* Tailwind gray-200 */
+
+  --text-light-primary: 31, 41, 55;   /* Tailwind gray-800 */
+  --text-light-secondary: 75, 85, 99; /* Tailwind gray-600 */
+  --text-light-muted: 156, 163, 175;  /* Tailwind gray-400 */
+
+  --border-light-primary: 209, 213, 219; /* Tailwind gray-300 */
+  --border-light-secondary: 229, 231, 235; /* Tailwind gray-200 */
+
+  --foreground-rgb: var(--text-light-primary);
+  --background-start-rgb: var(--bg-light-primary);
+  --background-end-rgb: var(--bg-light-primary);
+
+  --primary: var(--brand-primary);
+  --secondary: var(--brand-secondary);
+  --accent: var(--brand-accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+/* アイコンサイズのデフォルト */
+svg {
+  width: 1em;
+  height: 1em;
+}
+.icon-xs svg {
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+  max-width: 0.75rem !important;
+  max-height: 0.75rem !important;
+}
+.icon-sm svg {
+  width: 1rem !important;
+  height: 1rem !important;
+  max-width: 1rem !important;
+  max-height: 1rem !important;
+}
+.icon-md svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  max-width: 1.25rem !important;
+  max-height: 1.25rem !important;
+}
+.icon-lg svg {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  max-width: 1.5rem !important;
+  max-height: 1.5rem !important;
+}
+/* 小さくしたいアイコン用 */
+button svg,
+a svg,
+.icon-small svg {
+  width: 16px;
+  height: 16px;
 }
 
+/* リセット */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ボディ */
 body {
-  color: rgb(var(--dark-text-1));
-  background: rgb(var(--dark-bg-1));
+  color: rgb(var(--text-light-primary));
+  background-color: rgb(var(--bg-light-primary));
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
-/* コンポーネント共通スタイル */
+/* 見出し */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.025em;
+  color: rgb(var(--text-light-primary));
+}
+
+/* ③ カスタムコンポーネントを @layer components で定義 */
 @layer components {
   .card-dark {
-    @apply bg-zinc-900 border border-zinc-800 shadow-lg;
+    @apply bg-gray-900 border border-gray-800 shadow-xl rounded-xl;
   }
-  
+
   .input-dark {
-    @apply bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500 focus:border-violet-500 focus:ring-violet-500;
+    @apply bg-white border-gray-300 text-gray-700 rounded-lg
+           placeholder-gray-400 focus:border-orange-500
+           focus:ring-1 focus:ring-orange-500
+           transition-colors duration-200 ease-in-out shadow-sm;
   }
-  
+
   .button-primary {
-    @apply bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white transition-all;
+    @apply bg-orange-500 text-white hover:bg-orange-600
+           transition-all font-semibold rounded-lg
+           shadow-md hover:shadow-lg transform hover:scale-105
+           px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base
+           focus:outline-none focus-visible:ring-2
+           focus-visible:ring-offset-2 focus-visible:ring-orange-500
+           focus-visible:ring-offset-gray-50;
   }
-  
+
   .button-secondary {
-    @apply bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all;
+    @apply bg-transparent border-2 border-orange-500
+           text-orange-600 hover:bg-orange-500 hover:text-white
+           transition-all font-semibold rounded-lg shadow-sm
+           hover:shadow-md transform hover:scale-105
+           px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base
+           focus:outline-none focus-visible:ring-2
+           focus-visible:ring-offset-2 focus-visible:ring-orange-500
+           focus-visible:ring-offset-gray-50;
+  }
+
+  .button-muted {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300
+           transition-all font-medium rounded-lg shadow-sm
+           px-4 py-2 text-sm
+           focus:outline-none focus-visible:ring-2
+           focus-visible:ring-offset-2 focus-visible:ring-gray-400
+           focus-visible:ring-offset-gray-50;
+  }
+
+  .next-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .next-heading {
+    @apply text-3xl sm:text-4xl font-bold tracking-tight;
+  }
+
+  .next-subheading {
+    @apply text-base sm:text-lg text-gray-600 font-normal;
+  }
+
+  .next-card {
+    @apply bg-white border border-gray-200 rounded-xl
+           shadow-lg overflow-hidden transition-all duration-300
+           hover:shadow-xl hover:border-gray-300;
+  }
+
+  .card-light {
+    @apply bg-white border border-gray-200 rounded-xl
+           shadow-lg overflow-hidden transition-all duration-300
+           hover:shadow-xl hover:border-gray-300;
+  }
+
+  .next-nav-link {
+    @apply text-gray-500 hover:text-orange-600
+           transition-colors px-3 py-2 text-sm font-medium
+           rounded-md hover:bg-orange-500/10;
+  }
+
+  .next-gradient-text {
+    @apply text-transparent bg-clip-text
+           bg-gradient-to-r from-orange-500 to-amber-500;
+  }
+
+  .next-blur-overlay {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+
+  .next-grid {
+    @apply grid;
+  }
+
+  .next-section {
+    @apply py-16 md:py-20;
+  }
+
+  .next-button {
+    @apply rounded-lg font-semibold text-sm
+           transition-all duration-300 inline-flex
+           items-center justify-center focus:outline-none
+           focus-visible:ring-2 focus-visible:ring-offset-2;
   }
 }
 
-/* DatePickerのカスタムスタイル */
+/* ④ アニメーション */
+.next-fadeIn {
+  animation: fadeIn 0.6s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ⑤ DatePicker スタイル */
 .react-datepicker-wrapper {
   width: 100%;
 }
-
 .react-datepicker__input-container input {
   width: 100%;
 }
-
-.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list {
+.react-datepicker__time-container
+  .react-datepicker__time
+  .react-datepicker__time-box
+  ul.react-datepicker__time-list {
   padding-left: 0;
   padding-right: 0;
+}
+
+/* ⑥ スクロールバー */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--bg-light-tertiary));
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ⑦ テキスト選択 */
+::selection {
+  background: rgba(var(--brand-primary), 0.2);
+  color: rgb(var(--text-light-primary));
+}
+
+/* ⑧ デコレーティブパターン */
+.next-grid-pattern {
+  background-image: url(
+    "data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60'\n     xmlns='http://www.w3.org/2000/svg'%3E\n  %3Cg fill='none' fill-rule='evenodd'%3E\n    %3Cg fill='%23e5e7eb' fill-opacity='0.4'%3E\n      %3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E\n    %3C/g%3E\n  %3C/g%3E\n%3C/svg%3E"
+  );
 }

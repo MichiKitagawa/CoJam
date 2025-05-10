@@ -38,16 +38,20 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-zinc-950 to-zinc-900">
-      <div className="max-w-md w-full space-y-8 p-8 bg-zinc-900 rounded-xl shadow-xl border border-zinc-800 backdrop-blur-sm">
+    <div className="min-h-screen flex items-center justify-center next-section">
+      <div className="max-w-md w-full space-y-8 p-8 md:p-10 next-card next-fadeIn">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-indigo-500">CoJam</h1>
-          <h2 className="mt-6 text-2xl font-bold text-zinc-100">アカウントにログイン</h2>
-          <p className="mt-2 text-sm text-zinc-400">音楽セッションの世界へ戻ってきましょう</p>
+          <Link href="/" className="inline-block mb-6">
+            <span className="text-3xl font-bold next-gradient-text">
+              CoJam
+            </span>
+          </Link>
+          <h2 className="text-2xl font-bold text-white">アカウントにログイン</h2>
+          <p className="mt-2 text-sm text-neutral-400">音楽セッションの世界へ戻ってきましょう</p>
         </div>
         
         {state.error && (
-          <div className="bg-red-900/30 border-l-4 border-red-500 text-red-200 p-4 rounded-md">
+          <div className="bg-red-500/10 border-l-4 border-red-500 text-red-300 p-4 rounded-md next-fadeIn">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -62,12 +66,14 @@ const LoginPage = () => {
         )}
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-5">
-            <div className="group">
-              <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-1">メールアドレス</label>
+          <div className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-1.5">
+                メールアドレス
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
@@ -80,17 +86,19 @@ const LoginPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 block w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition duration-150 ease-in-out"
-                  placeholder="メールアドレス"
+                  className="input-dark pl-10 block w-full px-3 py-2.5"
+                  placeholder="you@example.com"
                 />
               </div>
             </div>
             
-            <div className="group">
-              <label htmlFor="password" className="block text-sm font-semibold text-zinc-300 mb-1">パスワード</label>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-1.5">
+                パスワード
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -102,53 +110,53 @@ const LoginPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 block w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition duration-150 ease-in-out"
-                  placeholder="パスワード"
+                  className="input-dark pl-10 block w-full px-3 py-2.5"
+                  placeholder="••••••••"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2">
             <div className="flex items-center">
               <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-violet-500 focus:ring-violet-500 border-zinc-700 rounded bg-zinc-800"
+                className="h-4 w-4 text-violet-500 focus:ring-violet-500 border-neutral-700 rounded bg-neutral-800 focus:ring-offset-neutral-900"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-zinc-400">
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-400">
                 ログイン状態を保持
               </label>
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-violet-400 hover:text-violet-300 transition-colors duration-200">
+              <Link href="#" className="font-medium text-violet-400 hover:text-violet-300 transition-colors duration-200">
                 パスワードを忘れた場合
-              </a>
+              </Link>
             </div>
           </div>
 
-          <div>
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition-all duration-200 transform hover:-translate-y-1"
+              className="w-full next-button button-primary py-3 text-sm font-semibold disabled:opacity-60"
             >
               {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   ログイン中...
-                </>
+                </div>
               ) : 'ログイン'}
             </button>
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-zinc-400">
+          <div className="text-center pt-4">
+            <p className="text-sm text-neutral-400">
               アカウントをお持ちでない方は{' '}
               <Link href="/register" className="font-medium text-violet-400 hover:text-violet-300 transition-colors duration-200">
                 こちら

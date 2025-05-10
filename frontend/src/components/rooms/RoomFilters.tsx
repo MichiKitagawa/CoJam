@@ -1,5 +1,6 @@
 import React from 'react';
 import { RoomQueryParams } from '../../services/roomService';
+import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface RoomFiltersProps {
   filters: RoomQueryParams;
@@ -28,94 +29,66 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFilterChange }) =>
     });
   };
 
+  const statusOptions = [
+    { label: 'すべて', value: 'all' as const, color: 'gray' },
+    { label: 'ライブ', value: 'live' as const, color: 'orange' },
+    { label: '予定', value: 'scheduled' as const, color: 'sky' },
+    { label: '終了', value: 'ended' as const, color: 'slate' },
+  ];
+
   return (
-    <div className="mb-8 bg-zinc-900 p-5 rounded-xl shadow-lg border border-zinc-800">
-      <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:space-x-4">
-        {/* 検索フィールド */}
-        <div className="flex-1">
+    <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-lg next-card">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-4 gap-y-4 items-center">
+        <div className="sm:col-span-2 lg:col-span-5">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
-              id="search"
               value={filters.search || ''}
               onChange={handleSearchChange}
-              placeholder="ルームを検索..."
-              className="pl-10 w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all duration-200"
+              placeholder="ルーム名、ホスト名などで検索..."
+              className="w-full py-2.5 pl-10 pr-3 input-dark text-sm rounded-lg"
             />
           </div>
         </div>
         
-        {/* ステータスフィルター */}
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => handleStatusChange('all')}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              filters.status === undefined
-                ? 'bg-violet-900/50 text-violet-200 border border-violet-700'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            すべて
-          </button>
-          <button
-            onClick={() => handleStatusChange('scheduled')}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              filters.status === 'scheduled'
-                ? 'bg-blue-900/50 text-blue-200 border border-blue-700'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            予定済み
-          </button>
-          <button
-            onClick={() => handleStatusChange('live')}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              filters.status === 'live'
-                ? 'bg-red-900/50 text-red-200 border border-red-700'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            ライブ
-          </button>
-          <button
-            onClick={() => handleStatusChange('ended')}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              filters.status === 'ended'
-                ? 'bg-zinc-700 text-zinc-200 border border-zinc-600'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            終了
-          </button>
+        <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center gap-2 sm:gap-2.5">
+          {statusOptions.map(item => (
+            <button
+              key={item.value}
+              onClick={() => handleStatusChange(item.value)}
+              className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${ 
+                (filters.status === item.value || (item.value === 'all' && filters.status === undefined))
+                  ? item.color === 'orange' ? 'bg-orange-500 text-white hover:bg-orange-600 ring-orange-500' 
+                  : item.color === 'sky'   ? 'bg-sky-500 text-white hover:bg-sky-600 ring-sky-500' 
+                  : item.color === 'slate' ? 'bg-slate-500 text-white hover:bg-slate-600 ring-slate-500' 
+                                         : 'bg-gray-600 text-white hover:bg-gray-700 ring-gray-500'
+                  : `bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800 ring-gray-300`
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
         
-        {/* 並べ替え */}
-        <div className="relative flex-shrink-0 min-w-[200px]">
+        <div className="sm:col-span-2 lg:col-span-3 relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
-            </svg>
+            <AdjustmentsHorizontalIcon className="h-5 w-5 text-gray-400" />
           </div>
           <select
-            id="sort"
             value={`${filters.sortBy || 'scheduledStartAt'}:${filters.sortOrder || 'desc'}`}
             onChange={handleSortChange}
-            className="pl-10 w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg appearance-none text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all duration-200"
+            className="w-full py-2.5 pl-10 pr-9 input-dark text-sm rounded-lg appearance-none"
           >
-            <option value="scheduledStartAt:asc">開始日時（古い順）</option>
-            <option value="scheduledStartAt:desc">開始日時（新しい順）</option>
-            <option value="createdAt:desc">作成日（新しい順）</option>
-            <option value="createdAt:asc">作成日（古い順）</option>
+            <option value="scheduledStartAt:desc">開始日 (新しい順)</option>
+            <option value="scheduledStartAt:asc">開始日 (古い順)</option>
+            <option value="createdAt:desc">作成日 (新しい順)</option>
+            <option value="createdAt:asc">作成日 (古い順)</option>
           </select>
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            <ChevronDownIcon className="h-5 w-5 text-gray-400" />
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import RoomCard from '../../components/rooms/RoomCard';
 import RoomFilters from '../../components/rooms/RoomFilters';
 import Pagination from '../../components/common/Pagination';
+import { PlusIcon, ExclamationCircleIcon, MinusCircleIcon } from '@heroicons/react/24/outline';
 
 const RoomsPage: React.FC = () => {
   const { state } = useAuth();
@@ -96,27 +97,25 @@ const RoomsPage: React.FC = () => {
   }, [filters]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-zinc-900">
-      <div className="container mx-auto px-4 py-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div className="min-h-screen next-section">
+      <div className="next-container">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 sm:mb-10 pb-6 sm:pb-8 border-b border-gray-200">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-zinc-100">
-              セッションルーム一覧
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-800">
+              セッションルーム
             </h1>
-            <p className="mt-2 text-zinc-400 max-w-2xl">
-              お気に入りのミュージシャンと一緒にセッションを楽しみましょう。ライブルームに参加するか、新しいルームを作成できます。
+            <p className="mt-2 text-lg text-gray-600">
+              お気に入りのミュージシャンと一緒にセッションを楽しみましょう
             </p>
           </div>
           
           {state.isAuthenticated && state.user?.role === 'performer' && (
             <button
               onClick={handleCreateRoom}
-              className="mt-4 md:mt-0 inline-flex items-center justify-center px-6 py-3 border border-zinc-700 text-base font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 shadow-md transition-all duration-200 transform hover:-translate-y-1"
+              className="next-button button-primary mt-6 sm:mt-0 shrink-0 text-base"
             >
-              <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              新しいルームを作成
+              <PlusIcon className="w-5 h-5 mr-2" />
+              新規ルーム作成
             </button>
           )}
         </div>
@@ -127,45 +126,40 @@ const RoomsPage: React.FC = () => {
         />
         
         {loading ? (
-          <div className="flex flex-col justify-center items-center h-64 bg-zinc-900 rounded-xl shadow-lg p-8 border border-zinc-800">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
-            <p className="text-zinc-400 mt-4">ルーム情報を取得中...</p>
+          <div className="flex justify-center items-center py-20">
+            <div className="flex flex-col items-center">
+              <svg className="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="mt-4 text-sm text-gray-500">ルーム情報を取得中...</p>
+            </div>
           </div>
         ) : error ? (
-          <div className="bg-red-900/20 border-l-4 border-red-500 p-6 rounded-lg shadow-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-red-300">エラーが発生しました</h3>
-                <p className="text-red-200 mt-1">{error}</p>
-              </div>
+          <div className="next-card p-6 sm:p-8 my-8 text-center border-red-300 bg-red-50">
+            <div className="flex flex-col items-center">
+              <ExclamationCircleIcon className="h-12 w-12 text-red-400 mb-3" />
+              <h3 className="text-lg font-semibold text-red-700 mb-1">エラーが発生しました</h3>
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           </div>
         ) : rooms.length === 0 ? (
-          <div className="bg-zinc-900 p-10 rounded-xl shadow-md text-center border border-zinc-800">
-            <svg className="mx-auto h-16 w-16 text-zinc-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-zinc-300">ルームが見つかりませんでした</h3>
-            <p className="mt-2 text-zinc-400">検索条件を変更するか、新しいルームを作成してみましょう</p>
+          <div className="next-card p-8 sm:p-12 my-8 text-center">
+            <MinusCircleIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="mt-3 text-xl font-semibold text-gray-700">ルームが見つかりませんでした</h3>
+            <p className="mt-2 text-base text-gray-500">検索条件を変更するか、新しいルームを作成してみましょう</p>
             {state.isAuthenticated && state.user?.role === 'performer' && (
               <button
                 onClick={handleCreateRoom}
-                className="mt-6 inline-flex items-center px-4 py-2 border border-zinc-700 text-sm font-medium rounded-md text-violet-300 bg-violet-900/30 hover:bg-violet-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
+                className="next-button button-secondary mt-8 text-base"
               >
-                <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                新しいルームを作成
+                <PlusIcon className="w-5 h-5 mr-2" />
+                新規ルーム作成
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {rooms.map((room) => (
               <RoomCard 
                 key={room.id} 
@@ -177,7 +171,7 @@ const RoomsPage: React.FC = () => {
         )}
         
         {!loading && rooms.length > 0 && (
-          <div className="mt-12">
+          <div className="mt-8">
             <Pagination
               currentPage={pagination.page}
               totalPages={pagination.totalPages}

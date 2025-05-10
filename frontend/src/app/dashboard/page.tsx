@@ -6,140 +6,156 @@ import Link from 'next/link';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthStatus } from '../../hooks/useAuthStatus';
+import { 
+  UserIcon, 
+  EnvelopeIcon, 
+  UserCircleIcon, 
+  ChevronRightIcon, 
+  MagnifyingGlassIcon, 
+  PlusIcon, 
+  ArrowRightIcon
+} from '@heroicons/react/24/outline';
 
 const DashboardPage = () => {
-  const { logout } = useAuth();
   const { user, isPerformer, isAudience } = useAuthStatus();
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
-    // ログアウト後は自動的にログインページにリダイレクトされます
-  };
-
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-zinc-900">
-        <header className="bg-zinc-900 border-b border-zinc-800 shadow-md">
-          <div className="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-indigo-500">CoJam</h1>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/profile"
-                className="flex items-center px-3 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-all duration-200 rounded-md hover:bg-zinc-800"
-              >
-                <svg className="w-5 h-5 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-                プロフィール
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-4 py-2 border border-zinc-700 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200 shadow-md"
-              >
-                <svg className="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-5-5H3zm7 5a1 1 0 00-1 1v5a1 1 0 002 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
-                  <path d="M14.293 5.293a1 1 0 011.414 0L17 6.586V15a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1h8.586l-2.293 2.293a1 1 0 010 1.414 1 1 0 001.414 0L14.293 5.293z" />
-                </svg>
-                ログアウト
-              </button>
+      <div className="next-section">
+        <div className="next-container">
+          {/* Hero Section */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 md:mb-16 next-fadeIn">
+            <div>
+              <h1 className="next-heading next-gradient-text mb-4">
+                ダッシュボード
+              </h1>
+              <p className="next-subheading max-w-2xl">
+                音楽セッションを探索、参加、または新しいルームを作成してみましょう。
+              </p>
             </div>
-          </div>
-        </header>
-        
-        <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-          {user && (
-            <div className="mb-10 bg-gradient-to-r from-zinc-900 to-zinc-900/80 backdrop-blur-sm rounded-xl p-8 shadow-xl border border-zinc-800/80">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+            
+            {user && (
+              <div className="mt-6 md:mt-0 flex items-center px-6 py-4 next-card">
+                <span className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-medium text-lg mr-4 shadow-md">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
                 <div>
-                  <h2 className="text-3xl font-bold text-zinc-100">ようこそ、{user.name}さん</h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-4">
-                    <div className="inline-flex items-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-900 text-indigo-200">
-                        {isPerformer ? '演奏者' : isAudience ? 'リスナー' : '不明'}
-                      </span>
-                    </div>
-                    <div className="inline-flex items-center text-sm text-zinc-400">
-                      <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                      </svg>
-                      {user.email}
-                    </div>
-                  </div>
-                </div>
-                
-                <Link
-                  href="/profile"
-                  className="mt-4 md:mt-0 flex items-center px-4 py-2 border border-zinc-700 text-sm font-medium rounded-lg text-zinc-200 bg-zinc-800 hover:bg-zinc-700 transition-all duration-200 shadow-md"
-                >
-                  <svg className="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                  プロフィールを編集
-                </Link>
-              </div>
-            </div>
-          )}
-
-          <h3 className="text-xl font-semibold text-zinc-200 mb-6">アクション</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 overflow-hidden shadow-xl rounded-xl border border-zinc-700/80 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-              <div className="px-6 py-6">
-                <div className="flex items-center mb-4">
-                  <div className="flex-shrink-0 bg-violet-900/30 p-3 rounded-lg">
-                    <svg className="h-6 w-6 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="ml-4 text-xl font-semibold text-zinc-100">ルームを探す</h3>
-                </div>
-                <p className="text-zinc-400 mb-6">
-                  公開中のセッションルームを探して参加しましょう。様々なジャンルとレベルのセッションが見つかります。
-                </p>
-                <button
-                  type="button"
-                  onClick={() => router.push('/rooms')}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-zinc-700 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200 shadow-md"
-                >
-                  <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                  ルーム一覧を見る
-                </button>
-              </div>
-            </div>
-
-            {isPerformer && (
-              <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 overflow-hidden shadow-xl rounded-xl border border-zinc-700/80 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <div className="px-6 py-6">
-                  <div className="flex items-center mb-4">
-                    <div className="flex-shrink-0 bg-indigo-900/30 p-3 rounded-lg">
-                      <svg className="h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </div>
-                    <h3 className="ml-4 text-xl font-semibold text-zinc-100">新しいルームを作成</h3>
-                  </div>
-                  <p className="text-zinc-400 mb-6">
-                    自分だけのセッションルームを作成して、他の演奏者と一緒に音楽を奏でましょう。ルーム設定をカスタマイズできます。
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/rooms/create')}
-                    className="w-full flex items-center justify-center px-4 py-3 border border-zinc-700 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200 shadow-md"
-                  >
-                    <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    ルームを作成する
-                  </button>
+                  <p className="text-neutral-400 text-sm">ようこそ</p>
+                  <p className="text-white font-medium text-lg">{user.name}さん</p>
                 </div>
               </div>
             )}
           </div>
-        </main>
+
+          {/* ステータスセクション */}
+          <h2 className="text-2xl font-semibold text-white mb-6 next-fadeIn" style={{ animationDelay: '0.1s' }}>アカウント情報</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 md:mb-16">
+            <div className="next-card p-6 next-fadeIn" style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-violet-500/10 mr-4">
+                  <UserIcon className="h-4 w-4 text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">ユーザータイプ</p>
+                  <p className="text-lg font-medium text-white">
+                    {isPerformer ? '演奏者' : isAudience ? 'リスナー' : '不明'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="next-card p-6 next-fadeIn" style={{ animationDelay: '0.3s' }}>
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-indigo-500/10 mr-4">
+                  <EnvelopeIcon className="h-4 w-4 text-indigo-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">メールアドレス</p>
+                  <p className="text-lg font-medium text-white truncate max-w-[180px] sm:max-w-[220px]">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="next-card p-6 next-fadeIn" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-teal-500/10 mr-4">
+                  <UserCircleIcon className="h-4 w-4 text-teal-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-400">プロフィール</p>
+                  <Link
+                    href="/profile"
+                    className="inline-flex items-center text-lg font-medium text-white hover:text-violet-400 transition-colors group"
+                  >
+                    編集する
+                    <ChevronRightIcon className="ml-1.5 h-3.5 w-3.5 transform transition-transform duration-200 group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* アクションセクション */}
+          <h2 className="text-2xl font-semibold text-white mb-6 next-fadeIn" style={{ animationDelay: '0.5s' }}>アクション</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="next-card group next-fadeIn" style={{ animationDelay: '0.6s' }}>
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col h-full">
+                  <div className="mb-6">
+                    <div className="w-12 h-12 bg-violet-500/10 rounded-lg flex items-center justify-center mb-5">
+                      <MagnifyingGlassIcon className="w-4 h-4 text-violet-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">セッションルームを探す</h3>
+                    <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+                      現在開催中や予定されているセッションルームをブラウズして、お気に入りのミュージシャンと一緒に演奏しましょう。
+                    </p>
+                  </div>
+                  <div className="mt-auto">
+                    <button
+                      onClick={() => router.push('/rooms')}
+                      className="w-full next-button button-primary flex items-center justify-center text-sm"
+                    >
+                      ルーム一覧を見る
+                      <ArrowRightIcon className="ml-2 h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {isPerformer && (
+              <div className="next-card group next-fadeIn" style={{ animationDelay: '0.7s' }}>
+                <div className="p-6 md:p-8">
+                  <div className="flex flex-col h-full">
+                    <div className="mb-6">
+                      <div className="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-5">
+                        <PlusIcon className="w-4 h-4 text-indigo-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">新しいルームを作成</h3>
+                      <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+                        あなた自身のセッションルームを作成し、他のミュージシャンを招待しましょう。ルームの設定をカスタマイズできます。
+                      </p>
+                    </div>
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => router.push('/rooms/create')}
+                        className="w-full next-button button-primary flex items-center justify-center text-sm"
+                      >
+                        新しいルームを作成
+                        <PlusIcon className="ml-2 h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   );

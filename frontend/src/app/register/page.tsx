@@ -16,14 +16,12 @@ const RegisterPage = () => {
   const { state, register, clearError } = useAuth();
   const router = useRouter();
 
-  // ユーザーが既に認証されている場合はダッシュボードにリダイレクト
   useEffect(() => {
     if (state.isAuthenticated) {
       router.push('/dashboard');
     }
-  }, [state.isAuthenticated]);
+  }, [state.isAuthenticated, router]);
 
-  // エラーをクリア
   useEffect(() => {
     return () => {
       clearError();
@@ -31,31 +29,24 @@ const RegisterPage = () => {
   }, [clearError]);
 
   const validateForm = () => {
-    // パスワードの確認
     if (password !== confirmPassword) {
       setPasswordError('パスワードが一致しません');
       return false;
     }
-    
-    // パスワードの強度検証
     if (password.length < 8) {
       setPasswordError('パスワードは8文字以上である必要があります');
       return false;
     }
-    
     setPasswordError('');
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
-    
     setIsSubmitting(true);
-    
     try {
       await register({
         name,
@@ -69,216 +60,156 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-zinc-950 to-zinc-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-8 bg-zinc-900 rounded-xl shadow-xl border border-zinc-800 backdrop-blur-sm">
+    <div className="min-h-screen flex items-center justify-center next-section bg-black">
+      <div className="max-w-md w-full space-y-6 p-8 md:p-10 next-card next-fadeIn">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-indigo-500">CoJam</h1>
-          <h2 className="mt-6 text-2xl font-bold text-zinc-100">新規アカウント登録</h2>
+          <Link href="/" className="inline-block mb-8">
+            <span className="text-2xl font-semibold text-white">
+              CoJam
+            </span>
+          </Link>
+          <h2 className="text-xl font-semibold text-zinc-100 tracking-tight">新規アカウント登録</h2>
           <p className="mt-2 text-sm text-zinc-400">音楽で繋がる新しい世界へようこそ</p>
         </div>
         
         {state.error && (
-          <div className="bg-red-900/30 border-l-4 border-red-500 text-red-200 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium">{state.error}</p>
-              </div>
-            </div>
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3.5 rounded-lg next-fadeIn text-sm">
+            <p>{state.error}</p>
           </div>
         )}
         
         {passwordError && (
-          <div className="bg-red-900/30 border-l-4 border-red-500 text-red-200 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium">{passwordError}</p>
-              </div>
-            </div>
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3.5 rounded-lg next-fadeIn text-sm">
+            <p>{passwordError}</p>
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-5">
-            <div className="group">
-              <label htmlFor="name" className="block text-sm font-semibold text-zinc-300 mb-1">
+        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 名前
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-10 block w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition duration-150 ease-in-out"
-                  placeholder="名前"
-                />
-              </div>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-dark block w-full px-3.5 py-2.5 text-sm"
+                placeholder="フルネーム"
+              />
             </div>
             
-            <div className="group">
-              <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-1">
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 メールアドレス
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                  </svg>
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 block w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition duration-150 ease-in-out"
-                  placeholder="メールアドレス"
-                />
-              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-dark block w-full px-3.5 py-2.5 text-sm"
+                placeholder="you@example.com"
+              />
             </div>
             
-            <div className="group">
-              <label htmlFor="password" className="block text-sm font-semibold text-zinc-300 mb-1">
+            <div>
+              <label htmlFor="password" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 パスワード
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 block w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition duration-150 ease-in-out"
-                  placeholder="パスワード（8文字以上）"
-                />
-              </div>
-              <p className="mt-1 text-xs text-zinc-500">※8文字以上の強力なパスワードを設定してください</p>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-dark block w-full px-3.5 py-2.5 text-sm"
+                placeholder="•••••••• (8文字以上)"
+              />
             </div>
             
-            <div className="group">
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-zinc-300 mb-1">
+            <div>
+              <label htmlFor="confirmPassword" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 パスワード（確認）
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 block w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm placeholder-zinc-500 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition duration-150 ease-in-out"
-                  placeholder="パスワード（確認）"
-                />
-              </div>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="input-dark block w-full px-3.5 py-2.5 text-sm"
+                placeholder="••••••••"
+              />
             </div>
             
-            <div className="group">
-              <label htmlFor="role" className="block text-sm font-semibold text-zinc-300 mb-1">
+            <div>
+              <label htmlFor="role" className="block text-xs font-medium text-zinc-400 mb-2">
                 ユーザータイプ
               </label>
-              <div className="mt-2 bg-zinc-800 rounded-lg p-1 border border-zinc-700 shadow-sm">
-                <div className="grid grid-cols-2 gap-1">
-                  <div
-                    className={`cursor-pointer rounded-md py-3 px-2 ${
-                      role === 'audience'
-                        ? 'bg-violet-900/50 text-violet-200 border border-violet-700'
-                        : 'hover:bg-zinc-700 text-zinc-300'
-                    }`}
-                    onClick={() => setRole('audience')}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg className="h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                      </svg>
-                      <span className="font-medium">リスナー</span>
-                    </div>
-                  </div>
-                  
-                  <div
-                    className={`cursor-pointer rounded-md py-3 px-2 ${
-                      role === 'performer'
-                        ? 'bg-violet-900/50 text-violet-200 border border-violet-700'
-                        : 'hover:bg-zinc-700 text-zinc-300'
-                    }`}
-                    onClick={() => setRole('performer')}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg className="h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                      </svg>
-                      <span className="font-medium">演奏者</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className={`flex items-center justify-center p-3 rounded-lg border transition-colors duration-150 text-sm font-medium ${
+                    role === 'audience'
+                      ? 'bg-white text-black border-white shadow-md'
+                      : 'bg-zinc-800/80 border-zinc-700/70 text-zinc-300 hover:bg-zinc-700/90 hover:border-zinc-600/80'
+                  }`}
+                  onClick={() => setRole('audience')}
+                >
+                  リスナー
+                </button>
+                
+                <button
+                  type="button"
+                  className={`flex items-center justify-center p-3 rounded-lg border transition-colors duration-150 text-sm font-medium ${
+                    role === 'performer'
+                      ? 'bg-white text-black border-white shadow-md'
+                      : 'bg-zinc-800/80 border-zinc-700/70 text-zinc-300 hover:bg-zinc-700/90 hover:border-zinc-600/80'
+                  }`}
+                  onClick={() => setRole('performer')}
+                >
+                  演奏者
+                </button>
               </div>
-              <input
-                type="hidden"
-                name="role"
-                value={role}
-              />
             </div>
           </div>
 
-          <div>
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition-all duration-200 transform hover:-translate-y-1"
+              className="w-full next-button button-primary py-3 text-sm disabled:opacity-70"
             >
               {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  登録処理中...
-                </>
-              ) : 'アカウント登録'}
+                  登録中...
+                </div>
+              ) : 'アカウント作成'}
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="text-center pt-4">
             <p className="text-sm text-zinc-400">
-              すでにアカウントをお持ちの方は{' '}
+              既にアカウントをお持ちですか？{' '}
               <Link href="/login" className="font-medium text-violet-400 hover:text-violet-300 transition-colors duration-200">
-                こちら
+                ログインはこちら
               </Link>
-              からログインできます。
             </p>
           </div>
         </form>

@@ -1,0 +1,30 @@
+# Node.js
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Next.js build cache
+.next
+
+# IDE/Editor specific
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Local environment files
+.env.local
+.env.*.local
+
+# Docker related files (if not needed inside the image)
+Dockerfile*
+.dockerignore
+
+# Git
+.git
+.gitignore
+
+# Test reports and coverage
+/coverage

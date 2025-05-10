@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface PaginationProps {
   currentPage: number;
@@ -74,22 +75,20 @@ const Pagination: React.FC<PaginationProps> = ({
   
   return (
     <nav className="flex justify-center">
-      <ul className="flex space-x-1">
+      <ul className="flex items-center text-xs">
         {/* 前ページボタン */}
         <li>
           <button
             onClick={goToPreviousPage}
             disabled={currentPage === 1}
-            className={`px-3 py-2 rounded-md ${
+            className={`p-1.5 rounded-sm ${
               currentPage === 1
-                ? 'text-zinc-500 cursor-not-allowed bg-zinc-800'
-                : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
-            } transition-colors duration-150`}
+                ? 'text-zinc-600 cursor-not-allowed'
+                : 'text-zinc-400 hover:text-zinc-200'
+            } transition-colors`}
             aria-label="前のページへ"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeftIcon className="h-3.5 w-3.5" />
           </button>
         </li>
         
@@ -97,15 +96,15 @@ const Pagination: React.FC<PaginationProps> = ({
         {getPageNumbers().map((page, index) => (
           <li key={index}>
             {page === '...' ? (
-              <span className="px-3 py-2 rounded-md text-zinc-500">...</span>
+              <span className="px-1 text-zinc-600">...</span>
             ) : (
               <button
                 onClick={() => typeof page === 'number' && onPageChange(page)}
-                className={`px-3 py-2 rounded-md ${
+                className={`w-7 h-7 mx-0.5 rounded-sm flex items-center justify-center ${
                   page === currentPage
-                    ? 'bg-violet-600 text-white'
-                    : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
-                } transition-colors duration-150`}
+                    ? 'bg-zinc-800 text-white font-medium border border-zinc-700'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+                } transition-colors text-xs`}
                 aria-current={page === currentPage ? 'page' : undefined}
               >
                 {page}
@@ -119,16 +118,14 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={goToNextPage}
             disabled={currentPage === totalPages}
-            className={`px-3 py-2 rounded-md ${
+            className={`p-1.5 rounded-sm ${
               currentPage === totalPages
-                ? 'text-zinc-500 cursor-not-allowed bg-zinc-800'
-                : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
-            } transition-colors duration-150`}
+                ? 'text-zinc-600 cursor-not-allowed'
+                : 'text-zinc-400 hover:text-zinc-200'
+            } transition-colors`}
             aria-label="次のページへ"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRightIcon className="h-3.5 w-3.5" />
           </button>
         </li>
       </ul>
