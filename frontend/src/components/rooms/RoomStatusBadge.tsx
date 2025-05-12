@@ -2,7 +2,7 @@ import React from 'react';
 import { formatDate } from '../../utils/dateFormatter';
 
 interface RoomStatusBadgeProps {
-  status: 'scheduled' | 'live' | 'ended';
+  status: 'scheduled' | 'ready' | 'live' | 'ended';
   scheduledStartAt?: string | Date;
   size?: 'sm' | 'md';
   className?: string;
@@ -20,6 +20,15 @@ const RoomStatusBadge: React.FC<RoomStatusBadgeProps> = ({ status, scheduledStar
         <>
           <span className="w-2 h-2 bg-orange-500 rounded-full mr-1.5 animate-pulse"></span>
           ライブ中
+        </>
+      );
+      break;
+    case 'ready':
+      badgeStyles = `bg-green-100 text-green-700 border border-green-200 ${sizeClasses} rounded-full inline-flex items-center font-semibold ${className}`;
+      content = (
+        <>
+          <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>
+          準備完了
         </>
       );
       break;

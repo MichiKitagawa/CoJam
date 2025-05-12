@@ -4,6 +4,8 @@ export interface User {
   email: string;
   profileImage?: string;
   bio?: string;
+  activeRoomId?: string | null;
+  activeRoomRole?: 'host' | 'performer' | 'viewer' | null;
 }
 
 export interface AuthState {

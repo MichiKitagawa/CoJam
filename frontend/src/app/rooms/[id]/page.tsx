@@ -38,6 +38,7 @@ const RoomDetailPage: React.FC = () => {
   
   const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
   const [userAccess, setUserAccess] = useState<RoomDetail['userAccess'] | null>(null);
+  const [activeRoomInfo, setActiveRoomInfo] = useState<RoomDetail | null>(null); // 参加中の別ルーム情報
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState<boolean>(false);
@@ -92,6 +93,28 @@ const RoomDetailPage: React.FC = () => {
       console.error('参加申請一覧取得エラー:', err);
     }
   };
+
+  useEffect(() => {
+    // 自分が他のルームに参加中なら、そのルーム情報を取得
+    if (authState.user?.activeRoomId && authState.user.activeRoomId !== roomId) {
+      getRoomById(authState.user.activeRoomId).then(res => {
+        if (res.success && res.data) {
+          setActiveRoomInfo(res.data.room);
+        } else {
+          // 取得に失敗した場合でも、参加中である事実は変わらないのでnullのままにするか、
+          // あるいはエラーメッセージ用のstateを用意しても良い
+          setActiveRoomInfo(null); 
+          if (authState.user) { // ユーザーがnullでないことを確認
+            console.warn(`Failed to fetch active room info for ${authState.user.activeRoomId}: ${res.message}`);
+          } else {
+            console.warn(`Failed to fetch active room info as user is null: ${res.message}`);
+          }
+        }
+      });
+    } else {
+      setActiveRoomInfo(null); // 現在のルームページであるか、どのルームにも参加していない場合はクリア
+    }
+  }, [authState.user?.activeRoomId, roomId]);
 
   useEffect(() => {
     fetchRoomData();
@@ -310,7 +333,7 @@ const RoomDetailPage: React.FC = () => {
     }
 
     // ホストがまだライブでないルームに入ろうとしている場合、ルームを開始する
-    if (isHost && roomDetail.status !== 'live') {
+    if (isHost && roomDetail.status === 'ready') {
       try {
         setActionError(null);
         const response = await startRoom(roomId);
@@ -334,6 +357,8 @@ const RoomDetailPage: React.FC = () => {
     } else if (roomDetail.status === 'live') {
       // ルームが既にライブの場合、またはホストでないユーザーがライブ中のルームに参加する場合
       router.push(`/rooms/${roomId}/session?role=${currentRole}`);
+    } else if (roomDetail.status === 'scheduled') {
+      alert('このルームはまだ予定状態です。開始予定時刻になるまでお待ちください。');
     } else {
       alert('ルームがライブ状態ではありません。');
     }
@@ -386,13 +411,17 @@ const RoomDetailPage: React.FC = () => {
 
   const { title, description, hostUser, status, scheduledStartAt, startedAt, participants } = roomDetail;
   const isLive = status === 'live';
+  const isReady = status === 'ready';
   const isEnded = status === 'ended';
+  const isScheduled = status === 'scheduled';
   
   const canInteract = authState.isAuthenticated && !isEnded;
   const isCurrentUserHost = userAccess?.isHost || false;
   const currentUserApplicationStatus = userAccess?.applicationStatus;
   const isCurrentUserApprovedPerformer = userAccess?.userRole === 'performer' && userAccess?.isParticipant === true;
 
+  // ユーザーが他のルームに参加しているかどうかのフラグ
+  const isInAnotherRoom = !!(authState.user?.activeRoomId && authState.user.activeRoomId !== roomId);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -406,16 +435,42 @@ const RoomDetailPage: React.FC = () => {
 
       {actionError && <p className="text-red-500 bg-red-100 p-3 rounded-md mb-4">{actionError}</p>}
 
-      {canInteract && (
+      {/* 他のルームに参加中の場合の表示 */} 
+      {isInAnotherRoom && activeRoomInfo && (
+        <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md shadow-md">
+          <h3 className="font-bold text-lg mb-2">参加中のルームがあります</h3>
+          <p>
+            あなたは現在、ルーム「<span className="font-semibold">{activeRoomInfo.title}</span>」に
+            「<span className="font-semibold">{authState.user?.activeRoomRole || '不明な役割'}</span>」として参加中です。
+          </p>
+          <p className="mt-1">
+            このルーム「<span className="font-semibold">{title}</span>」に新たに参加・申請するには、まず現在のルームから退出するか、セッションを終了してください。
+          </p>
+          <a 
+            href={`/rooms/${activeRoomInfo.id}`}
+            className="inline-block mt-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded transition duration-150 ease-in-out"
+          >
+            参加中のルーム「{activeRoomInfo.title}」へ移動
+          </a>
+        </div>
+      )}
+
+      {/* 現在のルームに対する操作ボタン (他のルームに参加中でない場合) */}
+      {!isInAnotherRoom && canInteract && (
         <div className="mb-6 space-y-3">
-          {!isCurrentUserHost && !isCurrentUserApprovedPerformer && userAccess && typeof userAccess.userRole === 'string' && userAccess.userRole !== 'viewer' && (
+          {/* ユーザーがホストでも承認済み演者でもない場合 */}
+          {!isCurrentUserHost && !isCurrentUserApprovedPerformer && userAccess && (
             <>
-              {userAccess && typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'pending' && (
+              {/* Case 1: 演者申請がペンディング中の場合 */}
+              {userAccess.applicationStatus === 'pending' && (
                 <p className="text-blue-600 bg-blue-100 p-3 rounded-md">演者としての参加を申請済みです。ホストの承認をお待ちください。</p>
               )}
-              {userAccess && typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'rejected' && (
+
+              {/* Case 2: 演者申請がリジェクトされた場合 */}
+              {userAccess.applicationStatus === 'rejected' && (
                 <p className="text-orange-600 bg-orange-100 p-3 rounded-md">
                   演者としての参加申請が拒否されました。
+                  {/* 再申請ボタン (canApplyがtrueの場合) */}
                   {userAccess.canApply && 
                     <button
                       onClick={handleApplyAsPerformer}
@@ -427,18 +482,20 @@ const RoomDetailPage: React.FC = () => {
                   }
                 </p>
               )}
-              {userAccess && userAccess.canApply && 
-               (!userAccess.applicationStatus || (typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'rejected')) &&
-               ((typeof userAccess.userRole !== 'string' || userAccess.userRole !== 'performer') && (typeof userAccess.applicationStatus !== 'string' || userAccess.applicationStatus !== 'approved')) && (
+
+              {/* Case 3: まだ演者申請をしていない、またはリジェクト後で再申請可能な場合 */}
+              {(!userAccess.applicationStatus || userAccess.applicationStatus === 'rejected') && userAccess.canApply && (
                 <button
                   onClick={handleApplyAsPerformer}
-                  disabled={isApplying || isEnded || (typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'pending')}
+                  disabled={isApplying || isEnded}
                   className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto disabled:opacity-50"
                 >
                   {isApplying ? '申請中...' : '演者として参加を申請する'}
                 </button>
               )}
-              {userAccess && typeof userAccess.userRole === 'string' && userAccess.userRole !== 'viewer' && (
+
+              {/* Case 4: ユーザーがまだ視聴者として参加していない場合 */}
+              {userAccess.userRole !== 'viewer' && userAccess.userRole !== 'performer' && (
                 <button
                   onClick={handleJoinAsViewer}
                   disabled={isJoining || isEnded}
@@ -447,20 +504,27 @@ const RoomDetailPage: React.FC = () => {
                   {isJoining ? '参加処理中...' : '視聴者として参加する'}
                 </button>
               )}
-              {userAccess && userAccess.userRole === 'viewer' && !isLive && (
-                  <p className="text-gray-500">視聴者として参加済みです。ルームが開始されるのをお待ちください。</p>
-              )}
-              {userAccess && userAccess.userRole === 'viewer' && isLive && (
-                  <button
-                    onClick={handleJoinSession} 
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto"
-                   >
-                    セッションを視聴する
-                   </button>
+
+              {/* Case 5: 既に視聴者として参加済みの場合の表示 */}
+              {userAccess.userRole === 'viewer' && (
+                <>
+                  {!isLive && (
+                    <p className="text-gray-500">視聴者として参加済みです。ルームが開始されるのをお待ちください。</p>
+                  )}
+                  {isLive && (
+                    <button
+                      onClick={handleJoinSession}
+                      className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto"
+                    >
+                      セッションを視聴する
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}
           
+          {/* 承認済み演者の場合の「承認済み演者としてセッションに参加」ボタン */}
           {isCurrentUserApprovedPerformer && !isCurrentUserHost && (
              <button
                 onClick={handleJoinAsApprovedPerformer}
@@ -471,7 +535,10 @@ const RoomDetailPage: React.FC = () => {
               </button>
           )}
           
-          {userAccess && (isCurrentUserHost || isCurrentUserApprovedPerformer || userAccess.userRole === 'viewer') && isLive && (
+          {/* ホストまたは承認済み演者または視聴者で、ルームがライブの場合の汎用参加ボタン */}
+          {userAccess && 
+           (isCurrentUserHost || isCurrentUserApprovedPerformer || (userAccess.userRole === 'viewer' && authState.user?.activeRoomId === roomId)) && 
+           isLive && (
             <button
               onClick={handleJoinSession}
               className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto"
@@ -479,13 +546,27 @@ const RoomDetailPage: React.FC = () => {
               {isCurrentUserHost ? 'セッションを開始/参加する (ホスト)' : (isCurrentUserApprovedPerformer ? 'セッションに参加する (演者)' : 'セッションを視聴する')}
             </button>
           )}
-           {!isLive && userAccess && (isCurrentUserHost || isCurrentUserApprovedPerformer || userAccess.userRole === 'viewer') && (
+
+          {/* ホストが準備完了状態のルームでセッションを開始するボタン */}
+          {userAccess && isCurrentUserHost && isReady && (
+            <button
+              onClick={handleJoinSession}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto"
+            >
+              セッションを開始する (ホスト)
+            </button>
+          )}
+
+           {!isLive && !isReady && 
+            userAccess && 
+            (isCurrentUserHost || isCurrentUserApprovedPerformer || (userAccess.userRole === 'viewer' && authState.user?.activeRoomId === roomId)) && (
             <p className="text-gray-500">ルームは現在ライブ状態ではありません。</p>
            )}
         </div>
       )}
 
-      {isCurrentUserHost && (
+      {/* ホストで、かつ他のルームに参加中でない場合の申請一覧 */}
+      {!isInAnotherRoom && isCurrentUserHost && (
         <div className="mt-8 p-4 border rounded-md shadow-sm">
           <h2 className="text-xl font-semibold mb-3">参加申請一覧 ({applications.filter(app => app.status === 'pending').length}件 保留中)</h2>
           {applications.filter(app => app.status === 'pending').length > 0 ? (
@@ -559,8 +640,8 @@ const RoomDetailPage: React.FC = () => {
           cancelText="キャンセル"
         />
       )}
-       {/* ホスト向けの操作ボタン (ルーム終了など) */}
-       {isCurrentUserHost && !isEnded && (
+       {/* ホスト向けの操作ボタン (ルーム終了など) - 他のルームに参加中でない場合のみ */}
+       {!isInAnotherRoom && isCurrentUserHost && !isEnded && (
         <div className="mt-8 pt-4 border-t">
           <button 
             onClick={() => setShowEndConfirm(true)} 

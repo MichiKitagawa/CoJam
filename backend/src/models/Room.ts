@@ -10,7 +10,7 @@ export interface IRoom extends Document {
   price?: number;
   maxParticipants: number;
   isArchiveEnabled: boolean;
-  status: 'scheduled' | 'live' | 'ended';
+  status: 'scheduled' | 'ready' | 'live' | 'ended';
   scheduledStartAt?: Date;
   startedAt?: Date;
   endedAt?: Date;
@@ -32,7 +32,7 @@ const RoomSchema = new Schema<IRoom>(
     isArchiveEnabled: { type: Boolean, default: true },
     status: {
       type: String,
-      enum: ['scheduled', 'live', 'ended'],
+      enum: ['scheduled', 'ready', 'live', 'ended'],
       default: 'scheduled',
     },
     scheduledStartAt: { type: Date },

@@ -13,9 +13,11 @@ const JoinRoomPage: React.FC = () => {
   
   // URLパラメータからトークンを取得
   const tokenFromUrl = searchParams?.get('token');
+  const roomIdFromUrl = searchParams?.get('roomId');
   
   // ステート
   const [joinToken, setJoinToken] = useState<string>(tokenFromUrl || '');
+  const [roomId, setRoomId] = useState<string>(roomIdFromUrl || '');
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [autoJoinAttempted, setAutoJoinAttempted] = useState<boolean>(false);
@@ -23,10 +25,14 @@ const JoinRoomPage: React.FC = () => {
   // URLからのトークンで自動参加を試みる
   useEffect(() => {
     if (tokenFromUrl && state.isAuthenticated && !autoJoinAttempted) {
-      handleJoinRoom(tokenFromUrl);
+      if (roomIdFromUrl) {
+        handleJoinRoom(tokenFromUrl, roomIdFromUrl);
+      } else {
+        handleJoinRoom(tokenFromUrl);
+      }
       setAutoJoinAttempted(true);
     }
-  }, [tokenFromUrl, state.isAuthenticated, autoJoinAttempted]);
+  }, [tokenFromUrl, roomIdFromUrl, state.isAuthenticated, autoJoinAttempted]);
   
   // 認証されていない場合はログインページにリダイレクト
   useEffect(() => {
@@ -36,7 +42,7 @@ const JoinRoomPage: React.FC = () => {
   }, [state.loading, state.isAuthenticated, router, tokenFromUrl]);
   
   // ルーム参加処理
-  const handleJoinRoom = async (token: string = joinToken) => {
+  const handleJoinRoom = async (token: string = joinToken, roomIdParam: string = roomId) => {
     if (!token.trim()) {
       setError('参加トークンを入力してください');
       return;
@@ -46,7 +52,15 @@ const JoinRoomPage: React.FC = () => {
     setError(null);
     
     try {
-      const response = await joinRoom({ joinToken: token });
+      const params: { joinToken: string, roomId?: string } = { 
+        joinToken: token 
+      };
+      
+      if (roomIdParam) {
+        params.roomId = roomIdParam;
+      }
+      
+      const response = await joinRoom(params);
       
       if (response.success && response.data) {
         // 参加成功したらルーム詳細ページへリダイレクト
@@ -71,6 +85,12 @@ const JoinRoomPage: React.FC = () => {
   // 入力変更ハンドラー
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setJoinToken(e.target.value);
+    setError(null);
+  };
+  
+  // roomId入力変更ハンドラー（オプション：手動入力フォーム用）
+  const handleRoomIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRoomId(e.target.value);
     setError(null);
   };
   
@@ -104,6 +124,19 @@ const JoinRoomPage: React.FC = () => {
             placeholder="ルームの参加トークンを入力"
             required
           />
+          
+          {/* オプション：ルームIDを手動入力できるようにする場合はこちらを有効化 */}
+          {!roomIdFromUrl && (
+            <div className="mt-4">
+              <FormInput
+                label="ルームID（オプション）"
+                name="roomId"
+                value={roomId}
+                onChange={handleRoomIdChange}
+                placeholder="ルームIDがわかる場合は入力してください"
+              />
+            </div>
+          )}
           
           <div className="mt-6">
             <button

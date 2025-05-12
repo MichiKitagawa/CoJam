@@ -34,6 +34,7 @@ export class CreateRoomDto {
 
 export enum RoomStatus {
   SCHEDULED = 'scheduled',
+  READY = 'ready',
   LIVE = 'live',
   ENDED = 'ended',
 }

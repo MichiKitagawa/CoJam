@@ -227,6 +227,7 @@ class RoomController {
     try {
       const roomId = req.params.id;
       const userId = (req as AuthRequest).user?.id;
+      const userRoleFromAuth = (req as AuthRequest).user?.activeRoomRole;
 
       if (!mongoose.Types.ObjectId.isValid(roomId)) {
         res.status(400).json({ success: false, message: '無効なルームIDです' });
@@ -256,12 +257,14 @@ class RoomController {
       const userAccess = isAuthenticated ? {
         isHost,
         isParticipant,
+        userRole: isHost ? 'host' : userRoleFromAuth,
         canJoin: !isParticipant && room.status !== 'ended' && room.participants.length < room.maxParticipants && applicationStatus !== 'pending',
         applicationStatus: applicationStatus,
-        canApply: !isHost && !isParticipant && room.status !== 'ended' && !applicationStatus, // まだ申請してない場合
+        canApply: !isHost && !isParticipant && room.status !== 'ended' && !applicationStatus,
       } : {
         isHost: false,
         isParticipant: false,
+        userRole: null,
         canJoin: false,
         applicationStatus: null,
         canApply: room.status !== 'ended',
@@ -304,7 +307,7 @@ class RoomController {
         return res.status(404).json({ success: false, message: 'ユーザーが見つかりません' });
       }
 
-      const room = await Room.findById(roomId);
+      const room = await Room.findById(roomId).populate('hostUserId', 'name'); // ホスト情報を取得
       if (!room) {
         return res.status(404).json({ success: false, message: 'ルームが見つかりません' });
       }
@@ -312,57 +315,87 @@ class RoomController {
         return res.status(400).json({ success: false, message: '終了したルームには参加できません' });
       }
 
-      if (user.activeRoomId && user.activeRoomId.toString() !== roomId) {
-        return res.status(409).json({ success: false, message: '既に他のアクティブなルームがあります。' });
-      }
-      if (user.activeRoomId && user.activeRoomId.toString() === roomId && user.activeRoomRole && user.activeRoomRole !== role) {
-        return res.status(409).json({ success: false, message: `既にこのルームに${user.activeRoomRole}として参加しています。役割を変更できません。` });
-      }
-      if (user.activeRoomId && user.activeRoomId.toString() === roomId && user.activeRoomRole === role) {
-        return res.status(200).json({ 
-          success: true, 
-          message: `${role === 'viewer' ? '視聴者' : '演者'}としてルームに参加済みです。`, 
-          roomId: room._id,
-          userId: user._id,
-          role: user.activeRoomRole,
-        });
+      // 1ユーザー1ルーム1ロール制約チェック
+      if (user.activeRoomId) {
+        if (user.activeRoomId.toString() !== roomId) {
+          // 他のルームに参加中
+          const activeRoom = await Room.findById(user.activeRoomId).select('title');
+          const activeRoomTitle = activeRoom ? activeRoom.title : '不明なルーム';
+          return res.status(409).json({ 
+            success: false, 
+            message: `既に他のルーム「${activeRoomTitle}」に「${user.activeRoomRole || '不明な役割'}」として参加中です。まず現在のルームから退出してください。`,
+            errorCode: 'ALREADY_IN_ANOTHER_ROOM'
+          });
+        } else {
+          // 同じルームに何らかのロールで参加中
+          if (user.activeRoomRole === role) {
+            return res.status(200).json({ 
+              success: true, 
+              message: `既にこのルームに「${role}」として参加済みです。`, 
+              roomId: room._id,
+              userId: user._id,
+              role: user.activeRoomRole,
+              errorCode: 'ALREADY_IN_SAME_ROOM_SAME_ROLE'
+            });
+          } else {
+            return res.status(409).json({ 
+              success: false, 
+              message: `既にこのルームに「${user.activeRoomRole || '不明な役割'}」として参加中です。1つのルームには1つの役割でしか参加できません。`,
+              errorCode: 'ALREADY_IN_SAME_ROOM_DIFFERENT_ROLE'
+            });
+          }
+        }
       }
 
+      // ホストが自分のルームに演者以外のロールで参加しようとした場合 (通常フロントで制御されるが念のため)
+      if (room.hostUserId._id.toString() === userId && role !== 'performer') { // ホストは実質performer
+          // ホストが作成したルームの場合、自動的に 'host' ロールが付与されるため、
+          // ここで viewer で join しようとするケースは通常発生しない想定。
+          // もしホストがviewerとして参加しようとしたら、それは不正な操作か、
+          // あるいはルーム作成時にactiveRoomRoleがhostに設定されていないバグ。
+          // ここでは、ホストは自分のルームにはviewerとしては参加できない、という制約を明確にする。
+        return res.status(403).json({ success: false, message: 'ホストは自分のルームに視聴者として参加できません。', errorCode: 'HOST_CANNOT_JOIN_AS_VIEWER' });
+      }
+
+
       if (role === 'performer') {
-        if (room.participants.length >= room.maxParticipants && !room.participants.map(p=>p.toString()).includes(userId)) {
-           return res.status(409).json({ success: false, message: 'ルームの演者数が上限に達しています。' });
-        }
-        
-        const application = await RoomApplication.findOne({ userId, roomId, status: 'approved' });
-        if (!application && room.hostUserId.toString() !== userId) { 
-          return res.status(403).json({ success: false, message: '演者としての参加が承認されていません。' });
+        // 演者としての参加条件チェック (満員、承認済みかホスト自身か)
+        if (room.hostUserId._id.toString() !== userId) { // ホスト自身でない場合のみ申請/承認チェック
+            if (room.participants.length >= room.maxParticipants && !room.participants.map(p=>p.toString()).includes(userId)) {
+                 return res.status(409).json({ success: false, message: 'ルームの演者数が上限に達しています。', errorCode: 'ROOM_FULL_FOR_PERFORMERS' });
+            }
+            const application = await RoomApplication.findOne({ userId, roomId, status: 'approved' });
+            if (!application) { 
+              return res.status(403).json({ success: false, message: '演者としての参加が承認されていません。', errorCode: 'PERFORMER_APPLICATION_NOT_APPROVED' });
+            }
         }
       }
       
       if (!room.participants.map(p => p.toString()).includes(userId)) {
         room.participants.push(new mongoose.Types.ObjectId(userId));
       }
+      // room.currentParticipants は WebSocket イベントや集計で更新される想定のため、ここでは直接操作しない
       await room.save();
 
       user.activeRoomId = room._id;
-      user.activeRoomRole = role as UserActiveRoomRole;
+      user.activeRoomRole = (room.hostUserId._id.toString() === userId) ? 'host' : role as UserActiveRoomRole; // ホストの場合は'host'ロール
       await user.save();
       
       const io = req.app.get('socketio') as SocketIOServer;
       io.to(roomId).emit('user_joined_room', { 
-        roomId: room._id, 
-        userId: user._id, 
+        roomId: room._id.toString(), 
+        userId: user._id.toString(), 
         userName: user.name, 
-        role: role,
+        role: user.activeRoomRole, // 正しいロールを送信
         profileImage: user.profileImage
       });
 
       return res.status(200).json({ 
         success: true, 
-        message: `${role === 'viewer' ? '視聴者' : '演者'}としてルームに参加しました。`, 
-        roomId: room._id,
-        userId: user._id,
-        role: role,
+        message: `「${user.activeRoomRole}」としてルーム「${room.title}」に参加しました。`, 
+        roomId: room._id.toString(),
+        userId: user._id.toString(),
+        role: user.activeRoomRole,
       });
     } catch (error) {
       console.error('ルーム参加エラー:', error);
@@ -568,6 +601,10 @@ class RoomController {
         res.status(400).json({ success: false, message: '終了したルームは開始できません。' });
         return;
       }
+      if (room.status === 'scheduled') {
+        res.status(400).json({ success: false, message: 'まだ開始予定時刻になっていないため、ルームを開始できません。' });
+        return;
+      }
 
       room.status = 'live';
       room.startedAt = new Date();
@@ -618,61 +655,114 @@ class RoomController {
       if (!user) {
         return res.status(404).json({ success: false, message: 'ユーザーが見つかりません' });
       }
-      if (user.activeRoomId && user.activeRoomId.toString() !== roomId) { 
-        return res.status(409).json({ success: false, message: '既に他のアクティブなルームがあります。' });
-      }
-      if (user.activeRoomId && user.activeRoomId.toString() === roomId && user.activeRoomRole !== null) {
-        return res.status(409).json({ success: false, message: `既にこのルームに${user.activeRoomRole}として参加しています。` });
-      }
-
-      const room = await Room.findById(roomId);
+      
+      const room = await Room.findById(roomId).populate('hostUserId', 'name');
       if (!room) {
         return res.status(404).json({ success: false, message: 'ルームが見つかりません' });
       }
-      if (room.status === 'ended') {
-        return res.status(400).json({ success: false, message: '終了したルームには申請できません' });
+
+      // 1ユーザー1ルーム1ロール制約: 既に何らかのルームに参加中、または申請中ルームのホストである場合は申請不可
+      if (user.activeRoomId) {
+        const activeRoom = await Room.findById(user.activeRoomId).select('title');
+        const activeRoomTitle = activeRoom ? activeRoom.title : '不明なルーム';
+        if (user.activeRoomId.toString() === roomId) {
+            // 現在のルームに既に参加している
+             return res.status(409).json({ 
+                success: false, 
+                message: `あなたは既にこのルーム「${room.title}」に「${user.activeRoomRole || '不明な役割'}」として参加しています。演者として参加を希望する場合は、現在の役割での参加を解消後、再度お試しください。`, // より丁寧なメッセージ
+                errorCode: 'ALREADY_IN_SAME_ROOM_APPLYING_AS_PERFORMER' 
+            });
+        } else {
+            // 他のルームに参加中
+            return res.status(409).json({ 
+                success: false, 
+                message: `あなたは既に他のルーム「${activeRoomTitle}」に「${user.activeRoomRole || '不明な役割'}」として参加中です。新しいルームに演者として申請するには、まず現在のルームから退出してください。`,
+                errorCode: 'ALREADY_IN_ANOTHER_ROOM_APPLYING_AS_PERFORMER'  
+            });
+        }
+      }
+      // 自分がホストのルームに演者として申請する、というシナリオは通常ありえない（ホストは最初から演者権限を持つ）
+      // ただし、何らかの理由でホストの activeRoomRole が 'host' になっていない場合に、この申請が来てしまう可能性を考慮。
+      if (room.hostUserId._id.toString() === userId) {
+        return res.status(400).json({ success: false, message: 'あなたはこのルームのホストです。ホストは自動的に演者権限を持ちます。', errorCode: 'HOST_CANNOT_APPLY_TO_OWN_ROOM' });
       }
 
+
+      if (room.status === 'ended') {
+        return res.status(400).json({ success: false, message: '終了したルームには申請できません', errorCode: 'CANNOT_APPLY_TO_ENDED_ROOM' });
+      }
+      if (room.status === 'live') { // ライブ中は参加申請を受け付けない
+        return res.status(400).json({ success: false, message: 'ライブ中のルームには現在申請できません', errorCode: 'CANNOT_APPLY_TO_LIVE_ROOM' });
+      }
+      // scheduled と ready 状態のルームは申請を受け付ける
+
+
       if (room.participants.length >= room.maxParticipants) {
-        return res.status(409).json({ success: false, message: 'ルームの演者数が上限に達しています。' });
+         // ホスト自身は満員でも入れるので、このチェックはホスト以外の場合。
+         // ただし、申請段階ではまだ participants には入っていない。
+         // 承認時に再度チェックされるべきだが、申請時にも事前チェックとして有用。
+         // ここでの participants は承認済み演者+ホスト。
+         const actualPerformersCount = room.participants.filter(pId => pId.toString() !== room.hostUserId._id.toString()).length;
+         if (actualPerformersCount >= (room.maxParticipants -1) ) { // ホストを除いた演者枠が埋まっている場合
+            return res.status(409).json({ success: false, message: 'ルームの演者枠が上限に達しています。', errorCode: 'ROOM_FULL_FOR_PERFORMERS_APPLICATION' });
+         }
       }
 
       const existingApplication = await RoomApplication.findOne({ userId, roomId });
       if (existingApplication) {
         if (existingApplication.status === 'pending') {
-          return res.status(400).json({ success: false, message: '既に申請済みです。ホストの承認をお待ちください。' });
+          return res.status(400).json({ success: false, message: '既に演者としての参加を申請済みです。ホストの承認をお待ちください。', errorCode: 'APPLICATION_ALREADY_PENDING' });
         }
         if (existingApplication.status === 'approved') {
-          return res.status(400).json({ success: false, message: '既にこのルームへの参加が承認されています。' });
+          // このケースは上記の activeRoomId チェックで捕捉されるはずだが念のため
+          return res.status(400).json({ success: false, message: '既にこのルームへの演者参加が承認されています。', errorCode: 'APPLICATION_ALREADY_APPROVED' });
         }
+        // 'rejected' の場合は再申請を許可 (upsert: true で対応)
       }
       
+      // ルームモデルのparticipantsには、ホストと承認済みの演者が含まれる。
+      // 申請ユーザーが既に（何らかの理由で）participantsに含まれている場合（例：以前viewerだったなど）、
+      // activeRoomRoleが設定されていないとおかしいため、基本的には上記のactiveRoomIdチェックで捕捉される。
+      // ここでは、万が一のケースとして、直接participantsに含まれているがactiveRoomRoleがない矛盾状態をチェック。
       if (room.participants.map(p => p.toString()).includes(userId)){
-        return res.status(400).json({ success: false, message: '既にルームの参加者です。' });
+        // この状態は通常、ユーザーのactiveRoom情報とDBのルーム参加者情報が不整合。
+        // activeRoomIdのチェックで捕捉されるべき。もしここに到達したら警告。
+        console.warn(`User ${userId} is in room ${roomId} participants list but has no activeRoomRole or different activeRoomId.`);
+        return res.status(409).json({ success: false, message: '既にルームの参加者リストに存在しますが、役割情報が不正です。システム管理者に連絡してください。', errorCode: 'PARTICIPANT_STATE_INCONSISTENT' });
       }
 
       const application = await RoomApplication.findOneAndUpdate(
-        { userId, roomId },
-        { userId, roomId, status: 'pending', requestedAt: new Date() },
+        { userId, roomId }, // 'rejected'状態の申請もこれで上書きして'pending'にする
+        { userId, roomId, status: 'pending', requestedAt: new Date(), messageFromApplicant: null },
         { new: true, upsert: true, setDefaultsOnInsert: true }
-      );
+      ).populate('userId', 'name profileImage'); // Populate user details for the response
 
       const io = req.app.get('socketio') as SocketIOServer;
-      const hostSocketId = await findSocketIdByUserId(room.hostUserId.toString(), io);
+      // ホストがオンラインであれば、そのホストに直接通知
+      const hostSocketId = await findSocketIdByUserId(room.hostUserId._id.toString(), io);
       if (hostSocketId) {
         io.to(hostSocketId).emit('performer_application_received', {
-          applicationId: application._id,
-          roomId: room._id,
-          userId: user._id,
-          userName: user.name,
+          _id: application._id, // application全体を送る方が良いかもしれない
+          roomId: application.roomId,
+          userId: { // 申請者の基本情報を渡す
+            _id: (application.userId as any)._id,
+            name: (application.userId as any).name,
+            profileImage: (application.userId as any).profileImage,
+          },
+          status: application.status,
           requestedAt: application.requestedAt,
+          messageFromApplicant: null
         });
+      } else {
+         // ホストがオフラインの場合の代替通知手段（例：DBに通知を保存）も考慮できる
+         console.log(`Host ${room.hostUserId._id.toString()} is not online. Application for room ${roomId} by user ${userId} cannot be sent via direct socket.`);
       }
+      
 
       return res.status(201).json({ 
         success: true, 
         message: '演者としての参加を申請しました。ホストの承認をお待ちください。',
-        application
+        application // フロントエンドで申請状態を更新するためにapplication情報を返す
       });
 
     } catch (error) {

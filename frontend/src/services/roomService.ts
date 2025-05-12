@@ -53,7 +53,7 @@ export interface RoomQueryParams {
   limit?: number;
 }
 
-// ルーム型定義
+// 基本的なルーム型定義
 export interface Room {
   id: string;
   title: string;
@@ -64,13 +64,13 @@ export interface Room {
     name: string;
     profileImage?: string;
   };
-  isPaid: boolean;
-  price?: number;
   maxParticipants: number;
   currentParticipants: number;
-  status: 'scheduled' | 'live' | 'ended';
+  isPaid: boolean;
+  price?: number;
   scheduledStartAt?: string;
   startedAt?: string;
+  status: 'scheduled' | 'ready' | 'live' | 'ended';
   createdAt: string;
 }
 
@@ -270,20 +270,20 @@ export const respondToApplication = async (
 
 // 既存の joinRoom を修正 (role パラメータを追加)
 export const joinRoom = async (params: { 
-  roomId: string; 
+  roomId?: string; // roomIdをオプションにする
   joinToken?: string; 
   role?: 'viewer' | 'performer'; 
 }): Promise<{ success: boolean; data?: any; message?: string; userRole?: 'host' | 'performer' | 'viewer' }> => {
   try {
-    const response = await api.post<
-      { success: boolean; data?: any; message?: string; userRole?: 'host' | 'performer' | 'viewer' }
-    >(
-        '/join', 
-        params 
-    );
+    // 必要なパラメータが揃っていることを確認
+    if (!params.roomId && !params.joinToken) {
+      return { success: false, message: 'ルームIDまたは参加トークンが必要です' };
+    }
+    
+    const response = await api.post<{ success: boolean; data: any; userRole?: 'host' | 'performer' | 'viewer' }>('/join', params);
     return response.data;
   } catch (error: any) {
-    return error.response?.data || { success: false, message: 'ルーム参加に失敗しました' };
+    return error.response?.data || { success: false, message: 'ルームへの参加に失敗しました' };
   }
 };
 

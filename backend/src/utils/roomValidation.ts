@@ -12,6 +12,21 @@ export const isRoomLive = (room: IRoom): boolean => {
   return room.status === 'live';
 };
 
+// ルームが準備完了状態かどうかをチェック
+export const isRoomReady = (room: IRoom): boolean => {
+  return room.status === 'ready';
+};
+
+// ルームが予定状態かどうかをチェック
+export const isRoomScheduled = (room: IRoom): boolean => {
+  return room.status === 'scheduled';
+};
+
+// ルームが終了状態かどうかをチェック
+export const isRoomEnded = (room: IRoom): boolean => {
+  return room.status === 'ended';
+};
+
 // ユーザーがルームのホストかどうかをチェック
 export const isRoomHost = (room: IRoom, userId: string): boolean => {
   // room.hostUserId は populate の結果、IUser の一部の型になっていると期待される
