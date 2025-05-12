@@ -47,11 +47,6 @@ const RoomsPage: React.FC = () => {
       return;
     }
     
-    if (state.user?.role !== 'performer') {
-      alert('パフォーマーアカウントのみルームを作成できます');
-      return;
-    }
-    
     router.push('/rooms/create');
   };
 
@@ -109,7 +104,7 @@ const RoomsPage: React.FC = () => {
             </p>
           </div>
           
-          {state.isAuthenticated && state.user?.role === 'performer' && (
+          {state.isAuthenticated && (
             <button
               onClick={handleCreateRoom}
               className="next-button button-primary mt-6 sm:mt-0 shrink-0 text-base"
@@ -148,7 +143,7 @@ const RoomsPage: React.FC = () => {
             <MinusCircleIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="mt-3 text-xl font-semibold text-gray-700">ルームが見つかりませんでした</h3>
             <p className="mt-2 text-base text-gray-500">検索条件を変更するか、新しいルームを作成してみましょう</p>
-            {state.isAuthenticated && state.user?.role === 'performer' && (
+            {state.isAuthenticated && (
               <button
                 onClick={handleCreateRoom}
                 className="next-button button-secondary mt-8 text-base"

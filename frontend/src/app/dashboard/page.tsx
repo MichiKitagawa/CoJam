@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const DashboardPage = () => {
-  const { user, isPerformer, isAudience } = useAuthStatus();
+  const { user } = useAuthStatus();
   const router = useRouter();
 
   return (
@@ -51,21 +51,7 @@ const DashboardPage = () => {
           {/* ステータスセクション */}
           <h2 className="text-2xl font-semibold text-white mb-6 next-fadeIn" style={{ animationDelay: '0.1s' }}>アカウント情報</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 md:mb-16">
-            <div className="next-card p-6 next-fadeIn" style={{ animationDelay: '0.2s' }}>
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-violet-500/10 mr-4">
-                  <UserIcon className="h-4 w-4 text-violet-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-neutral-400">ユーザータイプ</p>
-                  <p className="text-lg font-medium text-white">
-                    {isPerformer ? '演奏者' : isAudience ? 'リスナー' : '不明'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 md:mb-16">
             <div className="next-card p-6 next-fadeIn" style={{ animationDelay: '0.3s' }}>
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-indigo-500/10 mr-4">
@@ -128,32 +114,30 @@ const DashboardPage = () => {
               </div>
             </div>
             
-            {isPerformer && (
-              <div className="next-card group next-fadeIn" style={{ animationDelay: '0.7s' }}>
-                <div className="p-6 md:p-8">
-                  <div className="flex flex-col h-full">
-                    <div className="mb-6">
-                      <div className="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-5">
-                        <PlusIcon className="w-4 h-4 text-indigo-400" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-white mb-2">新しいルームを作成</h3>
-                      <p className="text-neutral-400 text-sm leading-relaxed mb-6">
-                        あなた自身のセッションルームを作成し、他のミュージシャンを招待しましょう。ルームの設定をカスタマイズできます。
-                      </p>
+            <div className="next-card group next-fadeIn" style={{ animationDelay: '0.7s' }}>
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col h-full">
+                  <div className="mb-6">
+                    <div className="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-5">
+                      <PlusIcon className="w-4 h-4 text-indigo-400" />
                     </div>
-                    <div className="mt-auto">
-                      <button
-                        onClick={() => router.push('/rooms/create')}
-                        className="w-full next-button button-primary flex items-center justify-center text-sm"
-                      >
-                        新しいルームを作成
-                        <PlusIcon className="ml-2 h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">新しいルームを作成</h3>
+                    <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+                      あなた自身のセッションルームを作成し、他のミュージシャンを招待しましょう。ルームの設定をカスタマイズできます。
+                    </p>
+                  </div>
+                  <div className="mt-auto">
+                    <button
+                      onClick={() => router.push('/rooms/create')}
+                      className="w-full next-button button-primary flex items-center justify-center text-sm"
+                    >
+                      新しいルームを作成
+                      <PlusIcon className="ml-2 h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

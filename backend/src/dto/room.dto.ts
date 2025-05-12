@@ -73,10 +73,13 @@ export class GetRoomsQueryDto {
 
 export class JoinRoomDto {
   @IsString()
-  @IsOptional()
-  roomId?: string = '';
+  roomId: string = '';
 
   @IsString()
   @IsOptional()
   joinToken?: string = '';
+
+  @IsString()
+  @IsEnum(['viewer', 'performer'])
+  role: 'viewer' | 'performer' = 'viewer';
 } 

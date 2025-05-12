@@ -23,7 +23,6 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
       profileImage: user.profileImage,
       bio: user.bio,
       createdAt: user.createdAt
@@ -56,7 +55,6 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         profileImage: user.profileImage,
         bio: user.bio,
         createdAt: user.createdAt,
@@ -101,7 +99,6 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
-      role: updatedUser.role,
       profileImage: updatedUser.profileImage,
       bio: updatedUser.bio,
       updatedAt: updatedUser.updatedAt
@@ -178,7 +175,7 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<v
 // ユーザー登録 - 高度なバージョン
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role, bio } = req.body;
+    const { name, email, password, bio } = req.body;
 
     // メールアドレスの重複チェック
     const existingUser = await User.findOne({ email });
@@ -192,7 +189,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       name,
       email,
       password,
-      role: role || 'audience',
       bio: bio || ''
     });
 
@@ -207,7 +203,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         bio: user.bio,
         profileImage: user.profileImage
       },
@@ -252,9 +247,9 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
         id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
-        role: updatedUser.role,
+        profileImage: updatedUser.profileImage,
         bio: updatedUser.bio,
-        profileImage: updatedUser.profileImage
+        updatedAt: updatedUser.updatedAt
       }
     });
   } catch (error) {
@@ -274,7 +269,9 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        profileImage: user.profileImage,
+        bio: user.bio,
+        createdAt: user.createdAt
       }))
     });
   } catch (error) {

@@ -24,6 +24,7 @@ const CreateRoomPage: React.FC = () => {
     isArchiveEnabled: true,
     scheduledStartAt: undefined
   });
+  const [startNow, setStartNow] = useState<boolean>(false);
   
   // エラーと読み込み状態
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -35,11 +36,6 @@ const CreateRoomPage: React.FC = () => {
     if (!state.loading) {
       if (!state.isAuthenticated) {
         router.push('/login?redirect=/rooms/create');
-        return;
-      }
-      
-      if (state.user?.role !== 'performer') {
-        router.push('/rooms');
         return;
       }
     }
@@ -90,6 +86,24 @@ const CreateRoomPage: React.FC = () => {
     }
   };
   
+  // 開始方法の変更ハンドラー
+  const handleStartOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isStartNow = e.target.value === 'now';
+    setStartNow(isStartNow);
+    if (isStartNow) {
+      // 「今すぐ開始」を選んだら、日時指定のエラーはクリア
+      if (errors.scheduledStartAt) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.scheduledStartAt;
+          return newErrors;
+        });
+      }
+      // 「今すぐ開始」の場合、日時指定をクリア
+      setFormData(prev => ({ ...prev, scheduledStartAt: undefined }));
+    }
+  };
+  
   // フォームバリデーション
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -104,6 +118,10 @@ const CreateRoomPage: React.FC = () => {
     
     if (formData.maxParticipants < 2 || formData.maxParticipants > 10) {
       newErrors.maxParticipants = '参加者数は2〜10人の間で設定してください';
+    }
+    
+    if (!startNow && !formData.scheduledStartAt) {
+      newErrors.scheduledStartAt = '予約開始の場合、開始予定日時を指定してください';
     }
     
     setErrors(newErrors);
@@ -122,8 +140,17 @@ const CreateRoomPage: React.FC = () => {
     setIsSubmitting(true);
     setSubmitError(null);
     
+    let submissionData = { ...formData };
+    if (startNow) {
+      const now = new Date();
+      // 現在時刻から1分後をUTCで設定 (簡易的な方法)
+      // より正確には date-fns-tz などを使うべき
+      now.setMinutes(now.getMinutes() + 1);
+      submissionData.scheduledStartAt = now.toISOString();
+    }
+    
     try {
-      const response = await createRoom(formData);
+      const response = await createRoom(submissionData);
       
       if (response.success && response.room) {
         // 作成成功したら詳細ページへリダイレクト
@@ -235,15 +262,46 @@ const CreateRoomPage: React.FC = () => {
             onChange={handleChange}
           />
           
-          {/* 開始予定日時 */}
-          <FormDateTimePicker
-            label="開始予定日時"
-            value={formData.scheduledStartAt}
-            onChange={handleDateTimeChange}
-            error={errors.scheduledStartAt}
-            minDate={new Date()}
-            className="input-dark"
-          />
+          {/* 開始方法の選択 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">開始方法</label>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center text-zinc-400">
+                <input
+                  type="radio"
+                  name="startOption"
+                  value="schedule"
+                  checked={!startNow}
+                  onChange={handleStartOptionChange}
+                  className="form-radio h-4 w-4 text-violet-600 bg-zinc-800 border-zinc-700 focus:ring-violet-500"
+                />
+                <span className="ml-2">予約して開始</span>
+              </label>
+              <label className="flex items-center text-zinc-400">
+                <input
+                  type="radio"
+                  name="startOption"
+                  value="now"
+                  checked={startNow}
+                  onChange={handleStartOptionChange}
+                  className="form-radio h-4 w-4 text-violet-600 bg-zinc-800 border-zinc-700 focus:ring-violet-500"
+                />
+                <span className="ml-2">今すぐ開始</span>
+              </label>
+            </div>
+          </div>
+          
+          {/* 開始予定日時 (予約の場合のみ表示) */}
+          {!startNow && (
+            <FormDateTimePicker
+              label="開始予定日時"
+              value={formData.scheduledStartAt}
+              onChange={handleDateTimeChange}
+              error={errors.scheduledStartAt}
+              minDate={new Date()}
+              className="input-dark"
+            />
+          )}
           
           {/* 送信ボタン */}
           <div className="mt-8">

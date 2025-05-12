@@ -13,7 +13,6 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 export interface JwtPayload {
   id: string;
   email: string;
-  role: string;
 }
 
 // ユーザー情報からJWTトークンを生成
@@ -21,7 +20,6 @@ export const generateToken = (user: IUser): string => {
   const payload: JwtPayload = {
     id: user._id instanceof mongoose.Types.ObjectId ? user._id.toString() : String(user._id),
     email: user.email,
-    role: user.role
   };
 
   // 型チェックをバイパス

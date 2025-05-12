@@ -22,14 +22,12 @@ export const createUser = async (userData: {
   name: string;
   email: string;
   password: string;
-  role?: 'performer' | 'audience';
 }): Promise<IUser | null> => {
   try {
     const user = new User({
       name: userData.name,
       email: userData.email,
       password: userData.password,
-      role: userData.role || 'audience'
     });
     
     return await user.save();

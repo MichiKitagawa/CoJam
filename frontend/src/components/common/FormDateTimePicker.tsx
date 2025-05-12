@@ -38,7 +38,7 @@ const FormDateTimePicker: React.FC<FormDateTimePickerProps> = ({
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-zinc-300 mb-1">
-        {label} (UTC) {required && <span className="text-red-400">*</span>}
+        {label} (JST) {required && <span className="text-red-400">*</span>}
       </label>
       <div className={`${error ? 'border-red-500' : 'border-zinc-700'} rounded-md focus-within:ring-2 focus-within:ring-violet-500 ${className}`}>
         <DatePicker
@@ -47,14 +47,14 @@ const FormDateTimePicker: React.FC<FormDateTimePickerProps> = ({
           showTimeSelect
           timeFormat="HH:mm"
           timeIntervals={15}
-          dateFormat="yyyy/MM/dd HH:mm 'UTC'"
+          dateFormat="yyyy/MM/dd HH:mm"
           locale={ja}
-          placeholderText="日時を選択 (UTC)"
+          placeholderText="日時を選択 (JST)"
           minDate={minDate}
           maxDate={maxDate}
           className="w-full px-3 py-2 bg-zinc-800 text-zinc-100 rounded-md focus:outline-none"
           calendarClassName="bg-zinc-800 text-zinc-100 border border-zinc-700"
-          timeCaption="時刻 (UTC)"
+          timeCaption="時刻 (JST)"
         />
       </div>
       {error && <p className="mt-1 text-sm text-red-400">{error}</p>}

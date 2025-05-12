@@ -34,30 +34,6 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
   }
 };
 
-// 特定のロールを持つユーザーのみアクセスを許可するミドルウェア
-export const authorizeRole = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      res.status(401).json({ message: '認証が必要です' });
-      return;
-    }
-
-    if (!roles.includes(req.user.role)) {
-      res.status(403).json({ message: 'このアクションを実行する権限がありません' });
-      return;
-    }
-
-    next();
-  };
-};
-
-// 演者のみアクセスを許可するミドルウェア
-export const requirePerformer = (req: Request, res: Response, next: NextFunction): void => {
-  authorizeRole(['performer'])(req, res, next);
-};
-
 export default {
   authenticateJWT,
-  authorizeRole,
-  requirePerformer
 }; 

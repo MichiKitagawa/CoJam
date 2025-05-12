@@ -11,7 +11,7 @@ const connectDB = async (): Promise<void> => {
     console.log('MongoDB接続成功');
   } catch (error) {
     console.error('MongoDB接続エラー:', error);
-    process.exit(1);
+    // process.exit(1); // コメントアウト
   }
 };
 

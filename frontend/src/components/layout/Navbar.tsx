@@ -10,7 +10,6 @@ interface NavItem {
   name: string;
   href: string;
   requireAuth?: boolean;
-  requirePerformer?: boolean;
 }
 
 const Navbar: React.FC = () => {
@@ -23,7 +22,7 @@ const Navbar: React.FC = () => {
   const navigation: NavItem[] = [
     { name: 'ダッシュボード', href: '/dashboard', requireAuth: true },
     { name: 'ルーム一覧', href: '/rooms' },
-    { name: 'ルーム作成', href: '/rooms/create', requireAuth: true, requirePerformer: true },
+    { name: 'ルーム作成', href: '/rooms/create', requireAuth: true },
   ];
 
   useEffect(() => {
@@ -46,9 +45,6 @@ const Navbar: React.FC = () => {
 
   const filteredNavigation = navigation.filter(item => {
     if (item.requireAuth && !state.isAuthenticated) {
-      return false;
-    }
-    if (item.requirePerformer && state.user?.role !== 'performer') {
       return false;
     }
     return true;

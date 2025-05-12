@@ -1,449 +1,577 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '../../../contexts/AuthContext';
-import { getRoomById, RoomDetail, joinRoom, leaveRoom, endRoom } from '../../../services/roomService';
+import {
+  getRoomById,
+  RoomDetail,
+  joinRoom,
+  leaveRoom,
+  endRoom,
+  applyForPerformer,
+  getPerformerApplications,
+  respondToApplication,
+  RoomApplication,
+  startRoom,
+} from '../../../services/roomService';
 import { formatDate } from '../../../utils/dateFormatter';
 import RoomStatusBadge from '../../../components/rooms/RoomStatusBadge';
 import UserAvatar from '../../../components/common/UserAvatar';
-import JoinTokenDialog from '../../../components/rooms/JoinTokenDialog';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
+import io, { Socket } from 'socket.io-client';
 
-interface PageProps {
-  params: {
-    id: string;
-  }
+// WebSocketから送られてくるルームステータス変更データの型を仮定
+interface RoomStatusUpdateData {
+  status?: RoomDetail['status'];
+  currentParticipants?: number;
+  startedAt?: string;
+  endedAt?: string;
 }
 
-const RoomDetailPage: React.FC<PageProps> = ({ params }) => {
-  const roomId = params.id;
-  const { state } = useAuth();
+
+const RoomDetailPage: React.FC = () => {
+  const routeParams = useParams(); 
+  const roomId = routeParams.id as string; 
+  const { state: authState } = useAuth(); 
   const router = useRouter();
   
-  // ステート定義
-  const [room, setRoom] = useState<RoomDetail | null>(null);
+  const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
+  const [userAccess, setUserAccess] = useState<RoomDetail['userAccess'] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [showJoinToken, setShowJoinToken] = useState<boolean>(false);
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [isLeaving, setIsLeaving] = useState<boolean>(false);
   const [isEnding, setIsEnding] = useState<boolean>(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState<boolean>(false);
   const [showEndConfirm, setShowEndConfirm] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  
-  // ルーム詳細の取得
-  useEffect(() => {
-    const fetchRoomDetail = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const response = await getRoomById(roomId);
-        
-        if (response.success && response.data) {
-          setRoom({
-            ...response.data.room,
-            userAccess: response.data.userAccess
-          });
-        } else {
-          setError(response.message || 'ルーム情報の取得に失敗しました');
+
+  const [applications, setApplications] = useState<RoomApplication[]>([]);
+  const [isApplying, setIsApplying] = useState<boolean>(false);
+  const [isResponding, setIsResponding] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const fetchRoomData = useCallback(async () => {
+    if (!roomId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getRoomById(roomId);
+      if (response.success && response.data) {
+        setRoomDetail(response.data.room);
+        setUserAccess(response.data.userAccess || null); 
+        console.log('Fetched Room Detail:', response.data.room);
+        console.log('Fetched User Access for non-host:', response.data.userAccess);
+        if (response.data.userAccess?.isHost) {
+          fetchApplications();
         }
-      } catch (err) {
-        console.error('ルーム詳細取得エラー:', err);
-        setError('ルーム詳細の取得中にエラーが発生しました');
-      } finally {
-        setLoading(false);
+      } else {
+        setError(response.message || 'ルーム情報の取得に失敗しました');
       }
-    };
-    
-    fetchRoomDetail();
+    } catch (err) {
+      console.error('ルーム詳細取得エラー:', err);
+      setError('ルーム詳細の取得中にエラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
   }, [roomId]);
-  
-  // ルームに参加する
-  const handleJoinRoom = async () => {
-    if (!state.isAuthenticated) {
+
+  const fetchApplications = async () => {
+    if (!roomId) return;
+    try {
+      const res = await getPerformerApplications(roomId);
+      if (res.success && res.applications) {
+        setApplications(res.applications);
+      } else {
+        console.warn('参加申請一覧の取得に失敗:', res.message);
+      }
+    } catch (err) {
+      console.error('参加申請一覧取得エラー:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoomData();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const currentAbortController = abortControllerRef.current;
+
+    const token = localStorage.getItem('token');
+    if (!roomId || !token || !authState.user?.id) return;
+
+    const newSocket: Socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8080', {
+      path: `/socket.io`, 
+      query: { token }, 
+      auth: { userId: authState.user.id, roomId } 
+    });
+    setSocket(newSocket);
+    
+    console.log(`Attempting to connect WebSocket with roomId: ${roomId} and userId: ${authState.user.id}`);
+
+    newSocket.on('connect', () => {
+      console.log('WebSocket connected:', newSocket.id);
+      // サーバーにルーム参加を通知 (socket.data.userId を使う場合、サーバー側でsocket.join(socket.handshake.auth.roomId)など)
+      // newSocket.emit('join_room_ws', { roomId, userId: authUser.id }); 
+    });
+    newSocket.on('disconnect', (reason) => console.log('WebSocket disconnected:', reason));
+    newSocket.on('connect_error', (err) => console.error('WebSocket connection error:', err));
+
+    newSocket.on('performer_application_received', (newApplication: RoomApplication) => {
+      console.log('Performer application received:', newApplication);
+      if (userAccess?.isHost && newApplication.roomId === roomId) { // roomIdもチェック
+        setApplications(prev => [...prev.filter(app => app._id !== newApplication._id), newApplication]);
+      }
+    });
+
+    newSocket.on('application_responded', (response: { applicationId: string; roomId: string; status: 'approved' | 'rejected'; message?: string }) => {
+      console.log('Application response received:', response);
+      if (response.roomId === roomId) {
+        const respondedApp = applications.find(app => app._id === response.applicationId);
+        if (respondedApp && respondedApp.userId._id === authState.user?.id) {
+           fetchRoomData(); 
+           alert(`参加申請が${response.status === 'approved' ? '承認' : '拒否'}されました。${response.message || ''}`);
+           if (response.status === 'approved') {
+             // 自動遷移はせず、ユーザーにセッション参加ボタンを押させる
+           }
+        }
+        // ホスト側でも申請リストから消すなどの処理
+        if (userAccess?.isHost) {
+            fetchApplications();
+        }
+      }
+    });
+    
+    newSocket.on('room_participant_approved', (data: { roomId: string; userId: string; userName?: string }) => {
+        console.log('Performer approved event:', data);
+        if (data.roomId === roomId) {
+            fetchRoomData();
+        }
+    });
+
+    newSocket.on('user_joined_room', (data: { roomId: string; userId: string; userName?:string; role: string; }) => {
+        console.log('User joined room event:', data);
+        if(data.roomId === roomId && data.userId !== authState.user?.id) {
+            fetchRoomData();
+        }
+    });
+    
+    newSocket.on('roomStatusUpdated', (updatedRoomData: RoomStatusUpdateData) => {
+      console.log('Room status updated:', updatedRoomData);
+      setRoomDetail(prev => prev ? { ...prev, ...updatedRoomData } : null);
+    });
+
+    return () => {
+      console.log('Disconnecting WebSocket and aborting API calls');
+      if (socket) {
+        socket.disconnect();
+      }
+      setSocket(null);
+      currentAbortController.abort();
+    };
+  }, [roomId, authState.user, fetchRoomData, userAccess?.isHost]);
+
+  const handleApplyAsPerformer = async () => {
+    if (!authState.isAuthenticated || !roomDetail) {
       router.push(`/login?redirect=/rooms/${roomId}`);
       return;
     }
-    
+
+    if (userAccess?.applicationStatus === 'pending') {
+      setActionError('既に演者としての参加を申請済みです。ホストの承認をお待ちください。');
+      return;
+    }
+    if (userAccess?.userRole === 'performer' || userAccess?.applicationStatus === 'approved') {
+      setActionError('既に演者として参加しているか、参加が承認されています。');
+      return;
+    }
+    if (userAccess && userAccess.canApply === false) { 
+      setActionError('現在、演者として申請できません。（例：ルームが満員、または募集終了など）');
+      return;
+    }
+
+    setIsApplying(true);
+    setActionError(null);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    try {
+      const response = await applyForPerformer(roomId, signal);
+      if (response.success && response.application) {
+        alert('演者としての参加を申請しました。');
+        setUserAccess(prev => ({
+          isHost: prev?.isHost || false,
+          isParticipant: prev?.isParticipant || false,
+          canJoin: prev?.canJoin || false,
+          applicationStatus: 'pending',
+          canApply: false, 
+          userRole: prev?.userRole || null,
+        }));
+        if (response.application) {
+            setApplications(prevApps => [...prevApps.filter(app => app._id !== response.application?._id), response.application!]);
+        }
+      } else if (response.message !== 'Request canceled') {
+        setActionError(response.message || '申請に失敗しました。');
+      }
+    } catch (err: any) {
+      if (err.name !== 'CanceledError') {
+        setActionError(err.message || '申請中にエラーが発生しました。');
+      }
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handleJoinAsViewer = async () => {
+    if (!authState.isAuthenticated || !roomDetail) {
+      router.push(`/login?redirect=/rooms/${roomId}`);
+      return;
+    }
     setIsJoining(true);
     setActionError(null);
-    
     try {
-      const response = await joinRoom({ roomId });
-      
+      const response = await joinRoom({ roomId, role: 'viewer' });
       if (response.success) {
-        // 詳細を再取得して表示を更新
-        const roomResponse = await getRoomById(roomId);
-        if (roomResponse.success && roomResponse.data) {
-          setRoom({
-            ...roomResponse.data.room,
-            userAccess: roomResponse.data.userAccess
-          });
-        }
+        router.push(`/rooms/${roomId}/session?role=viewer`);
       } else {
-        setActionError(response.message || 'ルーム参加に失敗しました');
+        setActionError(response.message || '視聴参加に失敗しました。');
+        alert(response.message || '視聴参加に失敗しました。');
       }
-    } catch (err) {
-      console.error('ルーム参加エラー:', err);
-      setActionError('ルーム参加中にエラーが発生しました');
+    } catch (err: any) {
+      setActionError(err.message || '視聴参加中にエラーが発生しました。');
+      alert(err.message || '視聴参加中にエラーが発生しました。');
     } finally {
       setIsJoining(false);
     }
   };
   
-  // ルームから退出する
-  const handleLeaveRoom = async () => {
-    setIsLeaving(true);
+  const handleJoinAsApprovedPerformer = async () => {
+    if (!authState.isAuthenticated || !roomDetail) {
+        router.push(`/login?redirect=/rooms/${roomId}`);
+        return;
+    }
+    setIsJoining(true);
     setActionError(null);
-    setShowLeaveConfirm(false);
-    
     try {
-      const response = await leaveRoom(roomId);
-      
-      if (response.success) {
-        // 詳細を再取得して表示を更新
-        const roomResponse = await getRoomById(roomId);
-        if (roomResponse.success && roomResponse.data) {
-          setRoom({
-            ...roomResponse.data.room,
-            userAccess: roomResponse.data.userAccess
-          });
+        const response = await joinRoom({ roomId, role: 'performer' });
+        if (response.success) {
+            router.push(`/rooms/${roomId}/session?role=performer`);
+        } else {
+            setActionError(response.message || '演者としての参加に失敗しました。');
+            alert(response.message || '演者としての参加に失敗しました。');
         }
-      } else {
-        setActionError(response.message || 'ルーム退出に失敗しました');
-      }
-    } catch (err) {
-      console.error('ルーム退出エラー:', err);
-      setActionError('ルーム退出中にエラーが発生しました');
+    } catch (err:any) {
+        setActionError(err.message || '演者参加処理中にエラー。');
+        alert(err.message || '演者参加処理中にエラー。');
     } finally {
-      setIsLeaving(false);
+        setIsJoining(false);
+    }
+  };
+
+  const handleRespondToApplication = async (applicationId: string, action: 'approve' | 'reject') => {
+    if (!roomDetail || !authState.user?.id || !userAccess?.isHost) return;
+    setIsResponding(applicationId); 
+    setActionError(null);
+    try {
+      const response = await respondToApplication(roomId, applicationId, action);
+      if (response.success && response.application) {
+        alert(`申請を${action === 'approve' ? '承認' : '拒否'}しました。`);
+        fetchRoomData(); 
+      } else {
+        setActionError(response.message || '応答に失敗しました。');
+      }
+    } catch (err: any) {
+      setActionError(err.message || '応答中にエラーが発生しました。');
+    } finally {
+      setIsResponding(null);
     }
   };
   
-  // ルームを終了する（ホスト専用）
+  const handleJoinSession = async () => {
+    if (!roomDetail) {
+      alert('ルーム情報が読み込めていません。');
+      return;
+    }
+
+    const isHost = userAccess?.isHost || false;
+    const currentRole = isHost ? 'host' : userAccess?.userRole;
+
+    if (!currentRole) {
+      alert('ユーザーの役割が不明です。');
+      return;
+    }
+
+    // ホストがまだライブでないルームに入ろうとしている場合、ルームを開始する
+    if (isHost && roomDetail.status !== 'live') {
+      try {
+        setActionError(null);
+        const response = await startRoom(roomId);
+        if (response.success && response.room) {
+          // roomDetail と userAccess を更新してUIを即時反映することも検討
+          setRoomDetail(prev => prev ? { 
+            ...prev, 
+            status: response.room!.status as 'live',
+            startedAt: response.room!.startedAt 
+          } : null);
+          // 成功したらセッションページへ
+          router.push(`/rooms/${roomId}/session?role=host`);
+        } else {
+          setActionError(response.message || 'ルームの開始に失敗しました。');
+          alert(response.message || 'ルームの開始に失敗しました。');
+        }
+      } catch (err: any) {
+        setActionError(err.message || 'ルーム開始処理中にエラーが発生しました。');
+        alert(err.message || 'ルーム開始処理中にエラーが発生しました。');
+      }
+    } else if (roomDetail.status === 'live') {
+      // ルームが既にライブの場合、またはホストでないユーザーがライブ中のルームに参加する場合
+      router.push(`/rooms/${roomId}/session?role=${currentRole}`);
+    } else {
+      alert('ルームがライブ状態ではありません。');
+    }
+  };
+
+  const handleLeaveRoom = async () => {
+    // 実装 (既存のものをベースに)
+  };
   const handleEndRoom = async () => {
+    if (!roomDetail || !userAccess?.isHost) {
+      alert('ルームを終了する権限がありません。');
+      return;
+    }
     setIsEnding(true);
     setActionError(null);
-    setShowEndConfirm(false);
-    
     try {
       const response = await endRoom(roomId);
-      
       if (response.success) {
-        // 詳細を再取得して表示を更新
-        const roomResponse = await getRoomById(roomId);
-        if (roomResponse.success && roomResponse.data) {
-          setRoom({
-            ...roomResponse.data.room,
-            userAccess: roomResponse.data.userAccess
-          });
-        }
+        alert('ルームを終了しました。');
+        // roomDetail ステートを更新
+        setRoomDetail(prev => prev ? { 
+          ...prev, 
+          status: 'ended', 
+          endedAt: new Date().toISOString() // APIレスポンスにendedAtがあればそれを使うのがより正確
+        } : null);
+        setUserAccess(prev => prev ? { ...prev, canJoin: false, canApply: false } : null); // 必要に応じてuserAccessも更新
+        router.push('/rooms'); // ルーム一覧ページへ遷移
       } else {
-        setActionError(response.message || 'ルーム終了に失敗しました');
+        setActionError(response.message || 'ルームの終了に失敗しました。');
+        alert(response.message || 'ルームの終了に失敗しました。');
       }
-    } catch (err) {
-      console.error('ルーム終了エラー:', err);
-      setActionError('ルーム終了中にエラーが発生しました');
+    } catch (err: any) {
+      setActionError(err.message || 'ルーム終了処理中にエラーが発生しました。');
+      alert(err.message || 'ルーム終了処理中にエラーが発生しました。');
     } finally {
       setIsEnding(false);
+      setShowEndConfirm(false); // 確認ダイアログを閉じる
     }
   };
-  
-  // セッションに参加する（WebRTCルームに接続）
-  const handleJoinSession = () => {
-    router.push(`/rooms/${roomId}/session`);
-  };
-  
-  // ローディング表示
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-gray-500">ロード中...</p>
-      </div>
-    );
+
+  if (loading && !roomDetail) { 
+    return <div className="flex justify-center items-center h-64"><p>ロード中...</p></div>;
   }
-  
-  // エラー表示
   if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-100 text-red-700 p-4 rounded-md">
-          <p>{error}</p>
-          <button
-            onClick={() => router.push('/rooms')}
-            className="mt-4 bg-white text-red-700 border border-red-300 px-4 py-2 rounded-md hover:bg-red-50"
-          >
-            ルーム一覧に戻る
-          </button>
-        </div>
-      </div>
-    );
+    return <div className="container mx-auto p-4"><p className="text-red-500">{error}</p></div>;
   }
+  if (!roomDetail) {
+    return <div className="container mx-auto p-4"><p>ルームが見つかりません。</p></div>;
+  }
+
+  const { title, description, hostUser, status, scheduledStartAt, startedAt, participants } = roomDetail;
+  const isLive = status === 'live';
+  const isEnded = status === 'ended';
   
-  // ルームが見つからない場合
-  if (!room) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-gray-100 p-8 rounded-md text-center">
-          <p className="text-gray-500">ルームが見つかりませんでした</p>
-          <button
-            onClick={() => router.push('/rooms')}
-            className="mt-4 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
-          >
-            ルーム一覧に戻る
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const canInteract = authState.isAuthenticated && !isEnded;
+  const isCurrentUserHost = userAccess?.isHost || false;
+  const currentUserApplicationStatus = userAccess?.applicationStatus;
+  const isCurrentUserApprovedPerformer = userAccess?.userRole === 'performer' && userAccess?.isParticipant === true;
+
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* ルームヘッダー */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start">
-          <h1 className="text-3xl font-bold">{room.title}</h1>
-          <RoomStatusBadge status={room.status} />
-        </div>
-        <p className="text-gray-600 mt-2">{room.description}</p>
+      <h1 className="text-3xl font-bold mb-2">{title}</h1>
+      <div className="mb-4">
+        <RoomStatusBadge status={status} />
+        {hostUser && <span className="ml-2 text-gray-600">ホスト: {hostUser.name}</span>}
+        {/* (他の情報) */}
       </div>
-      
-      {/* アクションエラー表示 */}
-      {actionError && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-md mb-6">
-          <p>{actionError}</p>
-        </div>
-      )}
-      
-      {/* ルーム情報と参加者 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ルーム情報カード */}
-        <div className="lg:col-span-2">
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">ルーム情報</h2>
-            
-            <div className="space-y-4">
-              {/* ホスト情報 */}
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-600 w-32">ホスト:</span>
-                <div className="flex items-center">
-                  <UserAvatar 
-                    user={room.hostUser} 
-                    size={40} 
-                  />
-                  <span className="ml-2">{room.hostUser.name}</span>
-                </div>
-              </div>
-              
-              {/* ステータス */}
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-600 w-32">ステータス:</span>
-                <RoomStatusBadge status={room.status} />
-              </div>
-              
-              {/* スケジュール情報 */}
-              {room.scheduledStartAt && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 w-32">開始予定:</span>
-                  <span>{formatDate(room.scheduledStartAt, true)}</span>
-                </div>
+      <p className="text-gray-700 mb-6">{description}</p>
+
+      {actionError && <p className="text-red-500 bg-red-100 p-3 rounded-md mb-4">{actionError}</p>}
+
+      {canInteract && (
+        <div className="mb-6 space-y-3">
+          {!isCurrentUserHost && !isCurrentUserApprovedPerformer && userAccess && typeof userAccess.userRole === 'string' && userAccess.userRole !== 'viewer' && (
+            <>
+              {userAccess && typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'pending' && (
+                <p className="text-blue-600 bg-blue-100 p-3 rounded-md">演者としての参加を申請済みです。ホストの承認をお待ちください。</p>
               )}
-              
-              {room.startedAt && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 w-32">開始時間:</span>
-                  <span>{formatDate(room.startedAt, true)}</span>
-                </div>
+              {userAccess && typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'rejected' && (
+                <p className="text-orange-600 bg-orange-100 p-3 rounded-md">
+                  演者としての参加申請が拒否されました。
+                  {userAccess.canApply && 
+                    <button
+                      onClick={handleApplyAsPerformer}
+                      disabled={isApplying || isEnded}
+                      className="ml-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                    >
+                      {isApplying ? '申請中...' : '再度演者として参加申請する'}
+                    </button>
+                  }
+                </p>
               )}
-              
-              {room.endedAt && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 w-32">終了時間:</span>
-                  <span>{formatDate(room.endedAt, true)}</span>
-                </div>
+              {userAccess && userAccess.canApply && 
+               (!userAccess.applicationStatus || (typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'rejected')) &&
+               ((typeof userAccess.userRole !== 'string' || userAccess.userRole !== 'performer') && (typeof userAccess.applicationStatus !== 'string' || userAccess.applicationStatus !== 'approved')) && (
+                <button
+                  onClick={handleApplyAsPerformer}
+                  disabled={isApplying || isEnded || (typeof userAccess.applicationStatus === 'string' && userAccess.applicationStatus === 'pending')}
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto disabled:opacity-50"
+                >
+                  {isApplying ? '申請中...' : '演者として参加を申請する'}
+                </button>
               )}
-              
-              {/* 参加者情報 */}
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-600 w-32">参加者数:</span>
-                <span>{room.currentParticipants}/{room.maxParticipants}</span>
-              </div>
-              
-              {/* 料金情報 */}
-              {room.isPaid && room.price && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 w-32">料金:</span>
-                  <span className="text-green-600 font-medium">¥{room.price.toLocaleString()}</span>
-                </div>
+              {userAccess && typeof userAccess.userRole === 'string' && userAccess.userRole !== 'viewer' && (
+                <button
+                  onClick={handleJoinAsViewer}
+                  disabled={isJoining || isEnded}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto disabled:opacity-50"
+                >
+                  {isJoining ? '参加処理中...' : '視聴者として参加する'}
+                </button>
               )}
-              
-              {/* アーカイブ設定 */}
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-600 w-32">アーカイブ:</span>
-                <span>{room.isArchiveEnabled ? '有効' : '無効'}</span>
-              </div>
-              
-              {/* 録画URL（終了済みの場合） */}
-              {room.status === 'ended' && room.recordingUrl && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 w-32">録画:</span>
-                  <a 
-                    href={room.recordingUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800"
-                  >
-                    録画を視聴する
-                  </a>
-                </div>
+              {userAccess && userAccess.userRole === 'viewer' && !isLive && (
+                  <p className="text-gray-500">視聴者として参加済みです。ルームが開始されるのをお待ちください。</p>
               )}
-              
-              {/* 招待リンク（ホストの場合） */}
-              {room.userAccess?.isHost && room.joinToken && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 w-32">招待:</span>
+              {userAccess && userAccess.userRole === 'viewer' && isLive && (
                   <button
-                    onClick={() => setShowJoinToken(true)}
-                    className="text-indigo-600 hover:text-indigo-800"
-                  >
-                    招待リンクを表示
-                  </button>
-                </div>
+                    onClick={handleJoinSession} 
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto"
+                   >
+                    セッションを視聴する
+                   </button>
               )}
-            </div>
-          </div>
-        </div>
-        
-        {/* サイドバー: アクションと参加者リスト */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* アクションカード */}
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">アクション</h2>
-            <div className="space-y-3">
-              {/* ルームに参加ボタン (まだ参加していない場合) */}
-              {!room.userAccess?.isParticipant && room.userAccess?.canJoin && room.status !== 'ended' && (
-                <button
-                  onClick={handleJoinRoom}
-                  disabled={isJoining}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out disabled:opacity-50"
-                >
-                  {isJoining ? '参加処理中...' : 'ルームに参加'}
-                </button>
-              )}
-
-              {/* セッション参加ボタン (ルーム参加済みで、まだ終了していない場合) */}
-              {room.userAccess?.isParticipant && room.status !== 'ended' && (
-                <button
-                  onClick={handleJoinSession} 
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out"
-                >
-                  セッションに参加する (配信/視聴)
-                </button>
-              )}
-              
-              {/* 参加トークン表示ボタン (ホストで、かつルームが予定されている場合) */}
-              {room.userAccess?.isHost && room.joinToken && room.status === 'scheduled' && (
-                  <button
-                    onClick={() => setShowJoinToken(true)}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out"
-                  >
-                    参加トークンを表示
-                  </button>
-              )}
-
-              {/* ルームから退出ボタン (参加済みで、ホストではない場合) */}
-              {room.userAccess?.isParticipant && !room.userAccess?.isHost && room.status !== 'ended' && (
-                <button
-                  onClick={() => setShowLeaveConfirm(true)}
-                  disabled={isLeaving}
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out disabled:opacity-50"
-                >
-                  {isLeaving ? '退出処理中...' : 'ルームから退出'}
-                </button>
-              )}
-
-              {/* ルームを終了ボタン (ホストで、まだ終了していない場合) */}
-              {room.userAccess?.isHost && room.status !== 'ended' && (
-                <button
-                  onClick={() => setShowEndConfirm(true)}
-                  disabled={isEnding}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out disabled:opacity-50"
-                >
-                  {isEnding ? '終了処理中...' : 'ルームを終了'}
-                </button>
-              )}
-              
-              {room.status === 'ended' && (
-                  <p className="text-center text-gray-500 py-2">このルームは終了しました。</p>
-              )}
-            </div>
-          </div>
+            </>
+          )}
           
-          {/* 参加者リスト */}
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">参加者 ({room.currentParticipants})</h2>
-            
-            {room.participants && room.participants.length > 0 ? (
-              <ul className="space-y-4">
-                {room.participants.map(participant => (
-                  <li key={participant.id} className="flex items-center space-x-3">
-                    <UserAvatar 
-                      user={participant} 
-                      size={40} 
-                    />
-                    <div>
-                      <p className="font-medium">{participant.name}</p>
-                      {room.hostUser.id === participant.id && (
-                        <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
-                          ホスト
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">参加者はまだいません</p>
-            )}
-          </div>
+          {isCurrentUserApprovedPerformer && !isCurrentUserHost && (
+             <button
+                onClick={handleJoinAsApprovedPerformer}
+                disabled={isJoining || !isLive}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto disabled:opacity-50"
+              >
+                {isJoining ? '参加処理中...' : '承認済み演者としてセッションに参加'}
+              </button>
+          )}
+          
+          {userAccess && (isCurrentUserHost || isCurrentUserApprovedPerformer || userAccess.userRole === 'viewer') && isLive && (
+            <button
+              onClick={handleJoinSession}
+              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto"
+            >
+              {isCurrentUserHost ? 'セッションを開始/参加する (ホスト)' : (isCurrentUserApprovedPerformer ? 'セッションに参加する (演者)' : 'セッションを視聴する')}
+            </button>
+          )}
+           {!isLive && userAccess && (isCurrentUserHost || isCurrentUserApprovedPerformer || userAccess.userRole === 'viewer') && (
+            <p className="text-gray-500">ルームは現在ライブ状態ではありません。</p>
+           )}
         </div>
+      )}
+
+      {isCurrentUserHost && (
+        <div className="mt-8 p-4 border rounded-md shadow-sm">
+          <h2 className="text-xl font-semibold mb-3">参加申請一覧 ({applications.filter(app => app.status === 'pending').length}件 保留中)</h2>
+          {applications.filter(app => app.status === 'pending').length > 0 ? (
+            <ul className="space-y-3">
+              {applications.filter(app => app.status === 'pending').map(app => (
+                <li key={app._id} className="p-3 bg-gray-50 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div className="mb-2 sm:mb-0 flex items-center">
+                    <UserAvatar user={{ id: app.userId._id, name: app.userId.name, profileImage: app.userId.profileImage }} size={32} />
+                    <span className="font-medium ml-2">{app.userId.name || '不明なユーザー'}</span>
+                    <span className="text-sm text-gray-600 ml-2">({formatDate(app.requestedAt)})</span>
+                  </div>
+                  <div className="space-x-0 sm:space-x-2 space-y-2 sm:space-y-0 flex flex-col sm:flex-row w-full sm:w-auto">
+                    <button
+                      onClick={() => handleRespondToApplication(app._id, 'approve')}
+                      disabled={isResponding === app._id}
+                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 w-full sm:w-auto"
+                    >
+                      {isResponding === app._id && actionError !== `approve-${app._id}` ? '処理中' : '承認'}
+                    </button>
+                    <button
+                      onClick={() => handleRespondToApplication(app._id, 'reject')}
+                      disabled={isResponding === app._id}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 w-full sm:w-auto"
+                    >
+                      {isResponding === app._id && actionError !== `reject-${app._id}` ? '処理中' : '拒否'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500">保留中の参加申請はありません。</p>
+          )}
+        </div>
+      )}
+      
+      {/* 参加者リスト */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-3">現在の参加者 ({participants?.length || 0}名 / 最大{roomDetail.maxParticipants}名)</h2>
+        {participants && participants.length > 0 ? (
+          <ul className="space-y-2">
+            {participants.map(p => (
+              <li key={p.id} className="flex items-center p-2 bg-gray-100 rounded">
+                <UserAvatar user={{ id: p.id, name: p.name, profileImage: p.profileImage }} size={32} />
+                <span className="ml-2">{p.name} {p.id === roomDetail.hostUser?.id ? '(ホスト)' : ''}</span>
+                 {/* ここで演者か視聴者かを表示できると良いが、現在のparticipantsにはその情報がない */}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500">まだ参加者はいません。</p>
+        )}
       </div>
-      
-      {/* 招待トークンダイアログ */}
-      {showJoinToken && room.joinToken && (
-        <JoinTokenDialog
-          roomId={room.id}
-          joinToken={room.joinToken}
-          onClose={() => setShowJoinToken(false)}
-        />
-      )}
-      
-      {/* 退出確認ダイアログ */}
-      {showLeaveConfirm && (
+
+      {/* 他のUI要素 (ConfirmDialogなど) */}
+      {showLeaveConfirm && <ConfirmDialog
+        title="ルーム退出"
+        message="本当にこのルームから退出しますか？"
+        onConfirm={handleLeaveRoom}
+        onCancel={() => setShowLeaveConfirm(false)}
+        confirmText="退出する"
+        cancelText="キャンセル"
+      />}
+      {isCurrentUserHost && showEndConfirm && (
         <ConfirmDialog
-          title="ルーム退出の確認"
-          message="このルームから退出しますか？"
-          confirmText="退出する"
-          cancelText="キャンセル"
-          onConfirm={handleLeaveRoom}
-          onCancel={() => setShowLeaveConfirm(false)}
-        />
-      )}
-      
-      {/* 終了確認ダイアログ */}
-      {showEndConfirm && (
-        <ConfirmDialog
-          title="ルーム終了の確認"
-          message="このルームを終了しますか？全ての参加者がセッションから切断されます。"
-          confirmText="終了する"
-          cancelText="キャンセル"
+          title="ルーム終了"
+          message="本当にこのルームを終了しますか？終了すると元に戻せません。"
           onConfirm={handleEndRoom}
           onCancel={() => setShowEndConfirm(false)}
+          confirmText="終了する"
+          cancelText="キャンセル"
         />
       )}
+       {/* ホスト向けの操作ボタン (ルーム終了など) */}
+       {isCurrentUserHost && !isEnded && (
+        <div className="mt-8 pt-4 border-t">
+          <button 
+            onClick={() => setShowEndConfirm(true)} 
+            disabled={isEnding}
+            className="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          >
+            {isEnding ? '終了処理中...' : 'ルームを終了する'}
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };

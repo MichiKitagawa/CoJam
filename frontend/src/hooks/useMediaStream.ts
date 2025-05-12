@@ -35,7 +35,7 @@ function useMediaStream(options?: UseMediaStreamOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [JSON.stringify(defaultOptions)]); // optionsオブジェクトの変更を検知するためにJSON.stringifyを使用
+  }, []); // 依存配列を空に変更
 
   const stopMediaStream = useCallback(() => {
     if (stream) {

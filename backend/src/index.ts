@@ -10,12 +10,16 @@ import connectDB from './config/database';
 import routes from './routes';
 import path from 'path';
 import { JoinRoomPayload, LeaveRoomPayload, SignalPayload, Rooms } from './types/signaling';
+import { startRoomScheduler } from './services/roomSchedulerService';
 
 // 環境変数を読み込む
 dotenv.config();
 
 // データベース接続
 connectDB();
+
+// データベース接続後にスケジューラを開始
+startRoomScheduler();
 
 // Expressアプリケーションの初期化
 const app = express();
@@ -26,6 +30,7 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST']
   }
 });
+app.set('socketio', io);
 
 // ミドルウェアの設定
 app.use(helmet());

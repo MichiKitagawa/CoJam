@@ -20,11 +20,6 @@ export const validateRegister = [
     .isLength({ min: 6 }).withMessage('パスワードは6文字以上である必要があります')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]/).withMessage('パスワードには少なくとも1つの大文字、小文字、数字を含める必要があります'),
 
-  // 役割のバリデーション
-  body('role')
-    .optional()
-    .isIn(['performer', 'audience']).withMessage('役割は performer または audience である必要があります'),
-
   // バリデーション結果の確認
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);

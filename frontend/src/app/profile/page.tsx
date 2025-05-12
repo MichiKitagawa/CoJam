@@ -154,17 +154,6 @@ const ProfilePage = () => {
                 
                 <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-1">
-                    <span className="text-sm font-medium text-zinc-400">ユーザータイプ</span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-900 text-indigo-200">
-                      {state.user?.role === 'performer' ? '演奏者' : 'リスナー'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-1">
                     <span className="text-sm font-medium text-zinc-400">自己紹介</span>
                   </div>
                   <div className="md:col-span-2">

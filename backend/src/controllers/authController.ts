@@ -5,7 +5,7 @@ import authConfig from '../config/auth';
 // ユーザー登録
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     // メールアドレスの重複チェック
     const existingUser = await User.findOne({ email });
@@ -19,7 +19,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       name,
       email,
       password,
-      role: role || 'audience'
     });
 
     await user.save();
@@ -32,7 +31,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
       },
       token,
       expiresIn: authConfig.JWT_EXPIRES_IN
@@ -72,7 +70,6 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         profileImage: user.profileImage,
         bio: user.bio
       },
@@ -141,7 +138,6 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         profileImage: user.profileImage,
         bio: user.bio
       }

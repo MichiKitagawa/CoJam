@@ -193,13 +193,31 @@ export interface RoomDetail extends Room {
     isHost: boolean;
     isParticipant: boolean;
     canJoin: boolean;
+    applicationStatus?: 'pending' | 'approved' | 'rejected' | null;
+    canApply?: boolean;
+    userRole?: 'host' | 'performer' | 'viewer' | null;
   };
 }
 
-// ルーム詳細取得
-export const getRoomById = async (roomId: string): Promise<{ success: boolean; data?: { room: RoomDetail; userAccess?: any }; message?: string }> => {
+// RoomApplicationの型 (バックエンドのIRoomApplicationに対応)
+export interface RoomApplication {
+  _id: string;
+  roomId: string;
+  userId: { 
+    _id: string;
+    name: string;
+    profileImage?: string;
+    email?: string; 
+  };
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  respondedAt?: string;
+}
+
+// ルーム詳細取得 (既存のものをベースに userAccess の型を更新)
+export const getRoomById = async (roomId: string): Promise<{ success: boolean; data?: { room: RoomDetail; userAccess?: RoomDetail['userAccess'] }; message?: string }> => {
   try {
-    const response = await api.get<{ success: boolean; data: { room: RoomDetail; userAccess?: any } }>(`/${roomId}`);
+    const response = await api.get<{ success: boolean; data: { room: RoomDetail; userAccess?: RoomDetail['userAccess'] } }>(`/${roomId}`);
     return response.data;
   } catch (error: any) {
     if (error.response?.data) {
@@ -209,16 +227,63 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean; d
   }
 };
 
-// ルーム参加
-export const joinRoom = async (params: { roomId?: string; joinToken?: string }): Promise<{ success: boolean; data?: any; message?: string }> => {
+// 演者参加申請
+export const applyForPerformer = async (roomId: string, signal?: AbortSignal): Promise<{ success: boolean; application?: RoomApplication; message?: string }> => {
   try {
-    const response = await api.post<{ success: boolean; data?: any; message?: string }>('/join', params);
+    const response = await api.post<{ success: boolean; application: RoomApplication; message?: string }>(`/${roomId}/apply`, {}, { signal });
     return response.data;
   } catch (error: any) {
-    if (error.response?.data) {
-      return error.response.data;
+    if (axios.isCancel(error)) {
+      console.log('Request canceled:', error.message);
+      return { success: false, message: 'Request canceled' };
     }
-    return { success: false, message: 'ルーム参加に失敗しました' };
+    return error.response?.data || { success: false, message: '演者参加申請に失敗しました' };
+  }
+};
+
+// 参加申請一覧取得 (ホスト用)
+export const getPerformerApplications = async (roomId: string): Promise<{ success: boolean; applications?: RoomApplication[]; message?: string }> => {
+  try {
+    const response = await api.get<{ success: boolean; applications: RoomApplication[] }>(`/${roomId}/applications`);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { success: false, message: '参加申請一覧の取得に失敗しました' };
+  }
+};
+
+// 参加申請への応答 (ホスト用)
+export const respondToApplication = async (
+  roomId: string,
+  applicationId: string,
+  action: 'approve' | 'reject'
+): Promise<{ success: boolean; application?: RoomApplication; message?: string }> => {
+  try {
+    const response = await api.post<{ success: boolean; application: RoomApplication }>( // message も返ってくる可能性があるので型に追加
+      `/${roomId}/applications/${applicationId}/respond`,
+      { action }
+    );
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { success: false, message: '参加申請への応答に失敗しました' };
+  }
+};
+
+// 既存の joinRoom を修正 (role パラメータを追加)
+export const joinRoom = async (params: { 
+  roomId: string; 
+  joinToken?: string; 
+  role?: 'viewer' | 'performer'; 
+}): Promise<{ success: boolean; data?: any; message?: string; userRole?: 'host' | 'performer' | 'viewer' }> => {
+  try {
+    const response = await api.post<
+      { success: boolean; data?: any; message?: string; userRole?: 'host' | 'performer' | 'viewer' }
+    >(
+        '/join', 
+        params 
+    );
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { success: false, message: 'ルーム参加に失敗しました' };
   }
 };
 
@@ -241,10 +306,17 @@ export const endRoom = async (roomId: string): Promise<{ success: boolean; messa
     const response = await api.post<{ success: boolean; message?: string }>(`/${roomId}/end`);
     return response.data;
   } catch (error: any) {
-    if (error.response?.data) {
-      return error.response.data;
-    }
-    return { success: false, message: 'ルーム終了に失敗しました' };
+    return error.response?.data || { success: false, message: 'ルームの終了に失敗しました' };
+  }
+};
+
+// ルーム開始 (ホスト用)
+export const startRoom = async (roomId: string): Promise<{ success: boolean; message?: string; room?: { id: string; status: string; startedAt: string } }> => {
+  try {
+    const response = await api.post<{ success: boolean; message?: string; room: { id: string; status: string; startedAt: string } }>(`/${roomId}/start`);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { success: false, message: 'ルームの開始に失敗しました' };
   }
 };
 
@@ -254,7 +326,11 @@ export default {
   getMyRooms,
   createRoom,
   getRoomById,
+  applyForPerformer,
+  getPerformerApplications,
+  respondToApplication,
   joinRoom,
   leaveRoom,
-  endRoom
+  endRoom,
+  startRoom
 }; 

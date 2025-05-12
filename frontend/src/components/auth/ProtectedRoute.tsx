@@ -6,12 +6,10 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'performer' | 'audience';
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  requiredRole
 }) => {
   const { state } = useAuth();
   const router = useRouter();
@@ -24,14 +22,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
 
     // 役割チェック（必要な場合）
-    if (
-      requiredRole &&
-      state.user &&
-      state.user.role !== requiredRole
-    ) {
-      router.push('/dashboard');
-    }
-  }, [state.isAuthenticated, state.loading, state.user, router, requiredRole]);
+    // if (
+    //   requiredRole &&
+    //   state.user &&
+    //   state.user.role !== requiredRole
+    // ) {
+    //   router.push('/dashboard');
+    // }
+  }, [state.isAuthenticated, state.loading, state.user, router]);
 
   // ロード中または認証/認可に失敗した場合は何も表示しない
   if (state.loading || !state.isAuthenticated) {

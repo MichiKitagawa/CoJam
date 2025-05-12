@@ -2,7 +2,6 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'performer' | 'audience';
   profileImage?: string;
   bio?: string;
 }
@@ -23,7 +22,6 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: 'performer' | 'audience';
 }
 
 export interface AuthResponse {

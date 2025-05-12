@@ -8,14 +8,16 @@ import AudioPlayer from '@/components/features/webrtc/AudioPlayer';
 import ParticipantList from '@/components/features/webrtc/ParticipantList'; 
 // import { getRoomById, RoomDetail } from '@/services/roomService'; // 必要に応じてルーム情報を取得
 
-interface SessionPageProps {
-  params: {
-    id: string; // roomId
-  }
-}
+// interface SessionPageProps { // コメントアウトまたは削除
+//   params: {
+//     id: string; // roomId
+//   }
+// }
 
-const SessionPage: React.FC<SessionPageProps> = ({ params }) => {
-  const roomId = params.id;
+// const SessionPage: React.FC<SessionPageProps> = ({ params }) => { // 元の行
+const SessionPage: React.FC = () => { // SessionPageProps を削除し、引数 params も削除
+  const routeParams = useParams(); // next/navigation から params を取得
+  const roomId = routeParams.id as string; // roomId を取得 (idが単一文字列であることを期待)
   const router = useRouter();
   const { state: authState } = useAuth();
   const {

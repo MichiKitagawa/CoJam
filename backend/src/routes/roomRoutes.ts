@@ -1,14 +1,13 @@
 import express from 'express';
 import roomController from '../controllers/roomController';
-import { authMiddleware, optionalAuthMiddleware, roleMiddleware } from '../middleware/auth.middleware';
+import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-// ルーム作成 - パフォーマーロールのみ許可
+// ルーム作成
 router.post(
   '/',
   authMiddleware,
-  roleMiddleware(['performer']),
   roomController.createRoom
 );
 
@@ -49,5 +48,29 @@ router.post(
   authMiddleware,
   roomController.endRoom
 );
+
+// 演者参加申請
+router.post(
+  '/:roomId/apply',
+  authMiddleware,
+  roomController.applyToRoomAsPerformer
+);
+
+// ルームへの参加申請一覧取得 (ホストのみ)
+router.get(
+  '/:roomId/applications',
+  authMiddleware,
+  roomController.getRoomApplications
+);
+
+// 参加申請への対応 (ホストのみ)
+router.post(
+  '/:roomId/applications/:applicationId/respond',
+  authMiddleware,
+  roomController.respondToRoomApplication
+);
+
+// ルーム開始
+router.post('/:roomId/start', authMiddleware, roomController.startRoom);
 
 export default router; 

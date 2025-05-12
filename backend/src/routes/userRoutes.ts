@@ -1,6 +1,6 @@
 import express from 'express';
 import userController from '../controllers/userController';
-import { authenticateJWT, authorizeRole } from '../middleware/auth';
+import { authenticateJWT } from '../middleware/auth';
 import { validateRegister, validateProfileUpdate } from '../middleware/validation';
 import { profileUpload } from '../middleware/upload';
 
@@ -21,8 +21,8 @@ router.post('/profile/image', authenticateJWT, profileUpload.single('profileImag
 // プロフィール更新（拡張版）
 router.put('/profile/extended', authenticateJWT, userController.updateUserProfile);
 
-// ユーザー一覧取得（管理者のみ）
-router.get('/', authenticateJWT, authorizeRole(['admin']), userController.getAllUsers);
+// ユーザー一覧取得（認証済みユーザーであればアクセス可能に変更）
+router.get('/', authenticateJWT, userController.getAllUsers);
 
 // ユーザープロフィール取得（他のルートの後に配置）
 router.get('/:id', userController.getUserProfile);

@@ -52,10 +52,12 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const stopMedia = useCallback(() => {
     stopMediaStream();
-    Object.values(peers).forEach(peer => peer.destroy());
-    setPeers({});
+    setPeers(currentPeers => {
+      Object.values(currentPeers).forEach(peer => peer.destroy());
+      return {};
+    });
     setRemoteStreams({});
-  }, [stopMediaStream, peers]);
+  }, [stopMediaStream]);
 
   const joinRoom = useCallback((roomId: string, userId: string) => {
     if (socket && localStream && myPeerId) { // Ensure myPeerId is set before joining
@@ -69,12 +71,14 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const leaveRoom = useCallback((roomId: string, userId: string) => {
     if (socket && myPeerId) {
       socket.emit('leave-room', { roomId, userId });
-      Object.values(peers).forEach(peer => peer.destroy());
-      setPeers({});
+      setPeers(currentPeers => {
+        Object.values(currentPeers).forEach(peer => peer.destroy());
+        return {};
+      });
       setRemoteStreams({});
       console.log(`Leaving room: ${roomId}`);
     }
-  }, [socket, peers, myPeerId]);
+  }, [socket, myPeerId]);
 
   const createPeer = useCallback((targetSocketId: string, initiator: boolean) => {
     if (!localStream || !socket || !myPeerId) {

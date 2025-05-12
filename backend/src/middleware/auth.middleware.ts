@@ -6,12 +6,11 @@ import { User } from '../models';
 export interface JwtPayload {
   id: string;
   email: string;
-  role: string;
 }
 
 // 認証済みリクエストの型定義
 export interface AuthRequest extends Request {
-  user: JwtPayload;
+  user?: JwtPayload;
 }
 
 // JWT認証ミドルウェア
@@ -35,7 +34,6 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     (req as AuthRequest).user = {
       id: user?._id ? user._id.toString() : '',
       email: user.email,
-      role: user.role
     };
     
     next();
@@ -61,7 +59,6 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
       (req as AuthRequest).user = {
         id: user?._id ? user._id.toString() : '',
         email: user.email,
-        role: user.role
       };
     }
     
@@ -73,20 +70,20 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
 };
 
 // 特定のロールを持つユーザーのみアクセスを許可するミドルウェア
-export const roleMiddleware = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const authReq = req as AuthRequest;
-    
-    if (!authReq.user) {
-      res.status(401).json({ success: false, message: '認証が必要です' });
-      return;
-    }
-    
-    if (!roles.includes(authReq.user.role)) {
-      res.status(403).json({ success: false, message: 'この操作を実行する権限がありません' });
-      return;
-    }
-    
-    next();
-  };
-}; 
+// export const roleMiddleware = (roles: string[]) => {
+//   return (req: Request, res: Response, next: NextFunction): void => {
+//     const authReq = req as AuthRequest;
+//     
+//     if (!authReq.user) {
+//       res.status(401).json({ success: false, message: '認証が必要です' });
+//       return;
+//     }
+//     
+//     if (!roles.includes(authReq.user.role)) {
+//       res.status(403).json({ success: false, message: 'この操作を実行する権限がありません' });
+//       return;
+//     }
+//     
+//     next();
+//   };
+// }; 

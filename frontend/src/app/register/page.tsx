@@ -10,7 +10,6 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'performer' | 'audience'>('audience');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const { state, register, clearError } = useAuth();
@@ -52,7 +51,6 @@ const RegisterPage = () => {
         name,
         email,
         password,
-        role
       });
     } finally {
       setIsSubmitting(false);
@@ -152,37 +150,6 @@ const RegisterPage = () => {
                 className="input-dark block w-full px-3.5 py-2.5 text-sm"
                 placeholder="••••••••"
               />
-            </div>
-            
-            <div>
-              <label htmlFor="role" className="block text-xs font-medium text-zinc-400 mb-2">
-                ユーザータイプ
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  className={`flex items-center justify-center p-3 rounded-lg border transition-colors duration-150 text-sm font-medium ${
-                    role === 'audience'
-                      ? 'bg-white text-black border-white shadow-md'
-                      : 'bg-zinc-800/80 border-zinc-700/70 text-zinc-300 hover:bg-zinc-700/90 hover:border-zinc-600/80'
-                  }`}
-                  onClick={() => setRole('audience')}
-                >
-                  リスナー
-                </button>
-                
-                <button
-                  type="button"
-                  className={`flex items-center justify-center p-3 rounded-lg border transition-colors duration-150 text-sm font-medium ${
-                    role === 'performer'
-                      ? 'bg-white text-black border-white shadow-md'
-                      : 'bg-zinc-800/80 border-zinc-700/70 text-zinc-300 hover:bg-zinc-700/90 hover:border-zinc-600/80'
-                  }`}
-                  onClick={() => setRole('performer')}
-                >
-                  演奏者
-                </button>
-              </div>
             </div>
           </div>
 

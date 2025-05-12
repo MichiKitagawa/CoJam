@@ -13,7 +13,8 @@ services:
     environment:
       - NODE_ENV=development
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     networks:
       - app-network
 
@@ -24,7 +25,6 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-      - ./backend/src/types:/app/src/types
     ports:
       - "8080:8080"
     environment:
@@ -32,8 +32,10 @@ services:
       - MONGODB_URI=mongodb://mongo:27017/cojam
       - CORS_ORIGIN=http://localhost:3000
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - app-network
 
@@ -45,6 +47,12 @@ services:
       - mongo-data:/data/db
     networks:
       - app-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:alpine

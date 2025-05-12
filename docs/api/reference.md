@@ -1,5 +1,19 @@
 # API リファレンス
 
+## 共通データモデル
+
+### User オブジェクト
+ユーザー情報を表す基本的なオブジェクトです。認証情報やプロフィール情報を含みます。
+今回の更新で、ユーザーが現在アクティブに参加しているルームの情報も保持するようになりました。
+
+- `id` (string): ユーザーID
+- `name` (string): ユーザー名
+- `email` (string): メールアドレス
+- `profileImage` (string, optional): プロフィール画像のURL
+- `activeRoomId` (string, nullable): 現在参加中のルームID。どのルームにも参加していない場合は `null`。
+- `activeRoomRole` (string, nullable): 現在参加中のルームでの役割。`'host'`, `'performer'`, `'viewer'` のいずれか。どのルームにも参加していない場合は `null`。
+- `createdAt` (string): 作成日時
+
 ## 認証API
 
 ### POST /api/auth/register
@@ -10,8 +24,7 @@
 {
   "name": "山田太郎",
   "email": "yamada@example.com",
-  "password": "securepassword",
-  "role": "performer" // performer または audience
+  "password": "securepassword"
 }
 ```
 
@@ -21,7 +34,6 @@
   "id": "usr_123456",
   "name": "山田太郎",
   "email": "yamada@example.com",
-  "role": "performer",
   "createdAt": "2023-06-01T12:00:00Z"
 }
 ```
@@ -42,8 +54,7 @@
 {
   "user": {
     "id": "usr_123456",
-    "name": "山田太郎",
-    "role": "performer"
+    "name": "山田太郎"
   },
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "expiresAt": "2023-06-02T12:00:00Z"
@@ -88,7 +99,7 @@
 ```
 
 ### POST /api/rooms
-新規ルーム作成（演者のみ）
+新規ルーム作成
 
 **リクエスト**
 ```json
@@ -103,38 +114,223 @@
 }
 ```
 
-**レスポンス**
+**備考:**
+- ルーム作成者は、自動的にそのルームのホスト兼演者 (役割: `host`) となります。
+- 作成に成功すると、作成したユーザーの `activeRoomId` がこのルームのIDで更新され、`activeRoomRole` が `'host'` に設定されます。
+
+**レスポンス (成功時 201 Created)**
 ```json
 {
   "id": "room_123456",
   "title": "ジャズセッションナイト",
   "hostUserId": "usr_123456",
   "joinToken": "secret_join_token",
+  "maxParticipants": 4,
   "createdAt": "2023-06-01T18:30:00Z"
 }
 ```
 
+**レスポンス (エラー時)**
+- `401 Unauthorized`: 認証されていません。
+- `400 Bad Request`: リクエスト形式が不正です (バリデーションエラー)。
+- `409 Conflict`: ユーザーは既に他のアクティブなルームに参加しています。
+
+### POST /api/rooms/{roomId}/apply
+演者としての参加を申請します。
+
+**認証**: 必要
+
+**リクエストボディ**: なし (または将来的に { message: "参加希望です" } など)
+
+**レスポンス (成功時 201 Created)**
+```json
+{
+  "success": true,
+  "message": "演者としての参加を申請しました。",
+  "application": {
+    "_id": "app_123",
+    "roomId": "room_abc",
+    "userId": "user_xyz",
+    "status": "pending",
+    "requestedAt": "2023-10-27T10:00:00Z"
+  }
+}
+```
+
+**レスポンス (エラー時)**
+- `401 Unauthorized`: 認証されていません。
+- `400 Bad Request`: 無効なルームID、または既に申請済み/承認済みの場合など。
+- `404 Not Found`: ルームが見つかりません。
+- `409 Conflict`:
+    - 申請ユーザーが既に他のアクティブなルームに参加しています。
+    - 申請ユーザーが現在のルームに既に何らかの役割で参加しています。
+    - ルームの演者数が上限 (4人) に達しています。
+
+### GET /api/rooms/{roomId}/applications
+特定のルームへの参加申請一覧を取得します。(ホスト専用)
+
+**認証**: 必要 (ルームホストであること)
+
+**レスポンス (成功時 200 OK)**
+```json
+{
+  "success": true,
+  "applications": [
+    {
+      "_id": "app_123",
+      "roomId": "room_abc",
+      "userId": {
+        "_id": "user_xyz",
+        "name": "申請者名",
+        "profileImage": "url_to_image"
+      },
+      "status": "pending",
+      "requestedAt": "2023-10-27T10:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/rooms/{roomId}/applications/{applicationId}/respond
+参加申請に対して承認または拒否します。(ホスト専用)
+
+**認証**: 必要 (ルームホストであること)
+
+**リクエストボディ**
+```json
+{
+  "action": "approve"
+}
+```
+または
+```json
+{
+  "action": "reject"
+}
+```
+
+**レスポンス (成功時 200 OK)**
+```json
+{
+  "success": true,
+  "message": "申請を承認しました。",
+  "application": {
+    "_id": "app_123",
+    "roomId": "room_abc",
+    "userId": "user_xyz",
+    "status": "approved",
+    "requestedAt": "2023-10-27T10:00:00Z",
+    "respondedAt": "2023-10-27T10:05:00Z"
+  }
+}
+```
+
+**備考 (承認時):**
+- 承認に成功すると、承認されたユーザーの `activeRoomId` がこのルームのIDで更新され、`activeRoomRole` が `'performer'` に設定されます。
+
+**レスポンス (エラー時)**
+- `401 Unauthorized`: 認証されていません。
+- `403 Forbidden`: ホストではありません。
+- `400 Bad Request`: 無効なID、無効なアクション、または既に応答済みの申請の場合など。
+- `404 Not Found`: ルームまたは申請が見つかりません。
+- `409 Conflict` (承認アクションの場合のみ):
+    - 対象ユーザーが既に他のアクティブなルームに参加しています (申請は自動的に拒否されます)。
+    - 対象ユーザーが現在のルームに既に何らかの役割で参加しています (申請は自動的に拒否されます)。
+    - ルームの演者数が上限 (4人) に達しています (申請は自動的に拒否されます)。
+
 ### POST /api/rooms/{roomId}/join
-ルーム参加（演者または視聴者）
+ルームに参加します。演者として参加する場合は、事前に承認されている必要があります。
 
-**リクエスト**
+**認証**: 必要
+
+**URLパラメータ**
+- `roomId` (string, required): 参加するルームのID
+
+**リクエストボディ**
 ```json
 {
-  "role": "performer", // performer または audience
-  "joinToken": "secret_join_token" // 演者の場合のみ必要
+  "role": "viewer" // または "performer"
 }
 ```
 
-**レスポンス**
+**備考:**
+- 参加に成功すると、参加したユーザーの `activeRoomId` がこのルームのIDで更新され、`activeRoomRole` が指定された `role` に設定されます。
+
+**レスポンス (成功時 200 OK)**
 ```json
 {
-  "rtcToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "channelName": "room_123456",
-  "userId": "usr_123456",
-  "role": "performer",
-  "serverTime": "2023-06-01T19:01:23Z"
+  "success": true,
+  "message": "視聴者としてルームに参加しました。", // メッセージは役割によって変わる
+  "roomId": "room_abc",
+  "userId": "user_123",
+  "role": "viewer" // 参加した役割
 }
 ```
+
+**レスポンス (エラー時)**
+- `401 Unauthorized`: 認証されていません。
+- `400 Bad Request`: 無効なルームID、無効な役割、または既に同じ役割で参加済みの場合など。
+- `403 Forbidden` (演者として参加しようとした場合): 参加が承認されていません。
+- `404 Not Found`: ルームまたはユーザーが見つかりません。
+- `409 Conflict`:
+    - ユーザーが既に他のアクティブなルームに参加しています。
+    - ユーザーが現在のルームに既に別の役割で参加しています。
+    - (演者として参加しようとした場合) ルームの演者数が上限に達しています。
+
+### POST /api/rooms/{roomId}/leave
+ルームから退出します。
+
+**認証**: 必要
+
+**URLパラメータ**
+- `roomId` (string, required): 退出するルームのID
+
+**リクエストボディ**: なし
+
+**備考:**
+- 退出に成功すると、退出したユーザーの `activeRoomId` と `activeRoomRole` が `null` に設定されます。
+- ホストは通常の退出はできません。ルームを終了する必要があります。
+
+**レスポンス (成功時 200 OK)**
+```json
+{
+  "success": true,
+  "message": "ルームから退出しました"
+}
+```
+
+**レスポンス (エラー時)**
+- `401 Unauthorized`: 認証されていません。
+- `400 Bad Request`: 無効なルームID、またはホストが退出を試みた場合など。
+- `404 Not Found`: ルームが見つかりません。
+
+### POST /api/rooms/{roomId}/end
+ルームを終了します。(ホスト専用)
+
+**認証**: 必要 (ルームホストであること)
+
+**URLパラメータ**
+- `roomId` (string, required): 終了するルームのID
+
+**リクエストボディ**: なし
+
+**備考:**
+- ルームの終了に成功すると、そのルームに参加していた全てのユーザー (ホストを含む) の `activeRoomId` と `activeRoomRole` が `null` に設定されます。
+- ルームのステータスが `ended` に更新されます。
+
+**レスポンス (成功時 200 OK)**
+```json
+{
+  "success": true,
+  "message": "ルームを終了しました"
+}
+```
+
+**レスポンス (エラー時)**
+- `401 Unauthorized`: 認証されていません。
+- `403 Forbidden`: ホストではありません。
+- `400 Bad Request`: 無効なルームID、または既に終了済みのルームの場合など。
+- `404 Not Found`: ルームが見つかりません。
 
 ## 決済API
 
@@ -203,7 +399,6 @@ ws://api.example.com/rooms/{roomId}/live?token=YOUR_AUTH_TOKEN
   "data": {
     "userId": "usr_789012",
     "name": "鈴木花子",
-    "role": "audience",
     "joinedAt": "2023-06-01T19:15:23Z"
   }
 }
@@ -252,5 +447,60 @@ ws://api.example.com/rooms/{roomId}/live?token=YOUR_AUTH_TOKEN
     "endedAt": "2023-06-01T21:00:00Z",
     "archiveUrl": "https://example.com/archives/room_123456"
   }
+}
+```
+
+### performer_application_received (サーバー → ホストクライアント)
+新しい演者参加申請があったことをホストに通知します。
+
+**データ**
+```json
+{
+  "applicationId": "app_123",
+  "roomId": "room_abc",
+  "userId": "user_xyz",
+  "userName": "申請者名",
+  "userProfileImage": "url_to_image",
+  "requestedAt": "2023-10-27T10:00:00Z"
+}
+```
+
+### application_responded (サーバー → 申請者クライアント)
+自身の参加申請に対するホストの応答を申請者に通知します。
+
+**データ**
+```json
+{
+  "applicationId": "app_123",
+  "roomId": "room_abc",
+  "status": "approved",
+  "message": "演者としての参加が承認されました。"
+}
+```
+
+### room_participant_approved (サーバー → ルーム参加者全員)
+ホストが演者の参加を承認したことをルーム内の全参加者に通知します。
+
+**データ**
+```json
+{
+  "roomId": "room_abc",
+  "userId": "user_xyz",
+  "userName": "承認されたユーザー名"
+}
+```
+
+### user_joined_room (サーバー → ルーム参加者全員) (変更)
+新しいユーザーがルームに参加したことを通知します。
+
+**データ**
+```json
+{
+  "roomId": "room_abc",
+  "userId": "user_xyz",
+  "userName": "参加ユーザー名",
+  "userProfileImage": "url_to_image",
+  "role": "viewer",
+  "joinedAt": "2023-10-27T11:00:00Z"
 }
 ``` 
