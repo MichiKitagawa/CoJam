@@ -6,8 +6,8 @@ import { User } from '../models';
 export interface JwtPayload {
   id: string;
   email: string;
-  activeRoomId?: string | null;
-  activeRoomRole?: string | null;
+  activeSessionId?: string | null;
+  activeSessionRole?: string | null;
 }
 
 // 認証済みリクエストの型定義
@@ -36,8 +36,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     (req as AuthRequest).user = {
       id: user?._id ? user._id.toString() : '',
       email: user.email,
-      activeRoomId: user.activeRoomId?.toString() || null,
-      activeRoomRole: user.activeRoomRole || null,
+      activeSessionId: user.activeSessionId?.toString() || null,
+      activeSessionRole: user.activeSessionRole || null,
     };
     
     next();
@@ -63,8 +63,8 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
       (req as AuthRequest).user = {
         id: user?._id ? user._id.toString() : '',
         email: user.email,
-        activeRoomId: user.activeRoomId?.toString() || null,
-        activeRoomRole: user.activeRoomRole || null,
+        activeSessionId: user.activeSessionId?.toString() || null,
+        activeSessionRole: user.activeSessionRole || null,
       };
     }
     

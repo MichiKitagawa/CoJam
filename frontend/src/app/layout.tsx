@@ -11,7 +11,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "CoJam - 即興コラボ音楽ライブプラットフォーム",
+  title: "Session - 即興コラボ音楽ライブプラットフォーム",
   description: "演者同士がリアルタイムでセッションし、リスナーには高品質Mix配信を行うプラットフォーム",
 };
 

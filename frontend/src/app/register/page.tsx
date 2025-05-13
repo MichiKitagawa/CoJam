@@ -59,14 +59,14 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center next-section bg-black">
-      <div className="max-w-md w-full space-y-6 p-8 md:p-10 next-card next-fadeIn">
+      <div className="max-w-md w-full space-y-8 p-8 md:p-10 next-card next-fadeIn">
         <div className="text-center">
-          <Link href="/" className="inline-block mb-8">
-            <span className="text-2xl font-semibold text-white">
-              CoJam
+          <Link href="/" className="inline-block mb-6">
+            <span className="text-3xl font-bold next-gradient-text">
+              Session
             </span>
           </Link>
-          <h2 className="text-xl font-semibold text-zinc-100 tracking-tight">新規アカウント登録</h2>
+          <h2 className="text-2xl font-bold text-white">新規アカウント登録</h2>
           <p className="mt-2 text-sm text-zinc-400">音楽で繋がる新しい世界へようこそ</p>
         </div>
         

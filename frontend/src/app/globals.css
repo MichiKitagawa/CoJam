@@ -22,13 +22,13 @@
   --border-light-primary: 209, 213, 219; /* Tailwind gray-300 */
   --border-light-secondary: 229, 231, 235; /* Tailwind gray-200 */
 
-  --foreground-rgb: var(--text-light-primary);
-  --background-start-rgb: var(--bg-light-primary);
-  --background-end-rgb: var(--bg-light-primary);
+  /* --foreground-rgb: var(--text-light-primary); は削除またはコメントアウト */
+  /* --background-start-rgb: var(--bg-light-primary); は削除またはコメントアウト */
+  /* --background-end-rgb: var(--bg-light-primary); は削除またはコメントアウト */
 
-  --primary: var(--brand-primary);
-  --secondary: var(--brand-secondary);
-  --accent: var(--brand-accent);
+  /* --primary: var(--brand-primary); は @layer base へ移動 */
+  /* --secondary: var(--brand-secondary); は @layer base へ移動 */
+  /* --accent: var(--brand-accent); は @layer base へ移動 */
 }
 
 /* アイコンサイズのデフォルト */
@@ -75,10 +75,8 @@ a svg,
   padding: 0;
 }
 
-/* ボディ */
+/* ボディ (基本的なフォント設定のみ残す、色指定は @layer base で行う) */
 body {
-  color: rgb(var(--text-light-primary));
-  background-color: rgb(var(--bg-light-primary));
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -88,10 +86,9 @@ body {
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
-/* 見出し */
+/* 見出し (基本的なスタイルのみ残す、色指定は @layer base で行う) */
 h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.025em;
-  color: rgb(var(--text-light-primary));
 }
 
 /* ③ カスタムコンポーネントを @layer components で定義 */
@@ -100,14 +97,14 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-gray-900 border border-gray-800 shadow-xl rounded-xl;
   }
 
-  .input-dark {
-    @apply bg-white border-gray-300 text-gray-700 rounded-lg
-           placeholder-gray-400 focus:border-orange-500
-           focus:ring-1 focus:ring-orange-500
+  .input-dark { /* 新しいCSS変数を使用 */
+    @apply bg-[rgb(var(--input))] border-[rgb(var(--border))] text-[rgb(var(--foreground))] rounded-md 
+           placeholder:text-[rgb(var(--muted-foreground))] focus:border-[rgb(var(--ring))] 
+           focus:ring-1 focus:ring-[rgb(var(--ring))]
            transition-colors duration-200 ease-in-out shadow-sm;
   }
 
-  .button-primary {
+  .button-primary { /* このスタイルは新しいCSS変数を使うように後で見直す */
     @apply bg-orange-500 text-white hover:bg-orange-600
            transition-all font-semibold rounded-lg
            shadow-md hover:shadow-lg transform hover:scale-105
@@ -117,7 +114,7 @@ h1, h2, h3, h4, h5, h6 {
            focus-visible:ring-offset-gray-50;
   }
 
-  .button-secondary {
+  .button-secondary { /* このスタイルは新しいCSS変数を使うように後で見直す */
     @apply bg-transparent border-2 border-orange-500
            text-orange-600 hover:bg-orange-500 hover:text-white
            transition-all font-semibold rounded-lg shadow-sm
@@ -128,7 +125,7 @@ h1, h2, h3, h4, h5, h6 {
            focus-visible:ring-offset-gray-50;
   }
 
-  .button-muted {
+  .button-muted { /* このスタイルは新しいCSS変数を使うように後で見直す */
     @apply bg-gray-200 text-gray-700 hover:bg-gray-300
            transition-all font-medium rounded-lg shadow-sm
            px-4 py-2 text-sm
@@ -145,23 +142,25 @@ h1, h2, h3, h4, h5, h6 {
     @apply text-3xl sm:text-4xl font-bold tracking-tight;
   }
 
-  .next-subheading {
-    @apply text-base sm:text-lg text-gray-600 font-normal;
+  .next-subheading { /* このスタイルは新しいCSS変数を使うように後で見直す */
+    @apply text-base sm:text-lg font-normal text-[rgb(var(--muted-foreground))]; /* muted-foreground を使用 */
   }
 
-  .next-card {
+  .next-card { /* 新しいCSS変数を使用 */
+    @apply bg-[rgb(var(--card))] border-[rgb(var(--border))] rounded-lg /* カードはrounded-lg */
+           text-[rgb(var(--card-foreground))] /* カード内のデフォルト文字色 */
+           shadow-xl /* 影を少し強くして奥行き感を */
+           overflow-hidden transition-all duration-300;
+           /* hover:shadow-2xl hover:border-[rgb(var(--ring))]; ホバーエフェクトは一旦シンプルに */
+  }
+
+  .card-light { /* .next-card に統合するため、将来的には削除または見直し */
     @apply bg-white border border-gray-200 rounded-xl
            shadow-lg overflow-hidden transition-all duration-300
            hover:shadow-xl hover:border-gray-300;
   }
 
-  .card-light {
-    @apply bg-white border border-gray-200 rounded-xl
-           shadow-lg overflow-hidden transition-all duration-300
-           hover:shadow-xl hover:border-gray-300;
-  }
-
-  .next-nav-link {
+  .next-nav-link { /* このスタイルは新しいCSS変数を使うように後で見直す */
     @apply text-gray-500 hover:text-orange-600
            transition-colors px-3 py-2 text-sm font-medium
            rounded-md hover:bg-orange-500/10;
@@ -216,31 +215,152 @@ h1, h2, h3, h4, h5, h6 {
   padding-right: 0;
 }
 
-/* ⑥ スクロールバー */
+/* ⑥ スクロールバー (テーマ追従するように後で見直す) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: rgb(var(--bg-light-tertiary));
+  background: rgb(var(--bg-light-tertiary)); /* ライトテーマ用 */
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #cbd5e1; /* ライトテーマ用 */
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94a3b8; /* ライトテーマ用 */
+}
+.dark ::-webkit-scrollbar-track {
+  background: rgb(55, 65, 81); /* gray-700相当 */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(107, 114, 128); /* gray-500相当 */
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(156, 163, 175); /* gray-400相当 */
 }
 
-/* ⑦ テキスト選択 */
+
+/* ⑦ テキスト選択 (テーマ追従するように後で見直す) */
 ::selection {
   background: rgba(var(--brand-primary), 0.2);
-  color: rgb(var(--text-light-primary));
+  color: rgb(var(--text-light-primary)); /* ライトテーマ用 */
 }
+.dark ::selection {
+  color: rgb(var(--foreground)); /* ダークテーマ用 */
+}
+
 
 /* ⑧ デコレーティブパターン */
 .next-grid-pattern {
   background-image: url(
     "data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60'\n     xmlns='http://www.w3.org/2000/svg'%3E\n  %3Cg fill='none' fill-rule='evenodd'%3E\n    %3Cg fill='%23e5e7eb' fill-opacity='0.4'%3E\n      %3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E\n    %3C/g%3E\n  %3C/g%3E\n%3C/svg%3E"
   );
+}
+.dark .next-grid-pattern { /* ダークテーマ用のグリッドパターン (色を変更) */
+  background-image: url(
+    "data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23374151' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"
+  );
+}
+
+
+@layer base {
+  :root { /* ライトテーマ用の主要変数 */
+    --background: 249, 250, 251; /* bg-light-primary (gray-50) */
+    --foreground: 31, 41, 55;   /* text-light-primary (gray-800) */
+    
+    --card: 255, 255, 255; /* bg-light-secondary (white) */
+    --card-foreground: 31, 41, 55; /* text-light-primary (gray-800) */
+
+    --popover: 255, 255, 255; /* bg-light-secondary (white) */
+    --popover-foreground: 31, 41, 55; /* text-light-primary (gray-800) */
+
+    --primary: 251, 146, 60;    /* brand-primary (orange-400) */
+    --primary-foreground: 255, 255, 255; 
+
+    --secondary: 52, 211, 153;  /* brand-secondary (emerald-400) */
+    --secondary-foreground: 31, 41, 55;
+
+    --muted: 229, 231, 235; /* bg-light-tertiary (gray-200) */
+    --muted-foreground: 75, 85, 99; /* text-light-secondary (gray-600) */
+
+    --accent: 250, 204, 21;     /* brand-accent (yellow-300) */
+    --accent-foreground: 31, 41, 55;
+
+    --destructive: 239, 68, 68; /* red-500 */
+    --destructive-foreground: 249, 250, 251; /* gray-50 */
+
+    --border: 209, 213, 219; /* border-light-primary (gray-300) */
+    --input: 229, 231, 235; /* border-light-secondary (gray-200) - これは背景色に近い */
+    --ring: 251, 146, 60; /* brand-primary */
+
+    --radius: 0.5rem; /* 角丸の基本 (rounded-lg) */
+    --radius-sm: 0.375rem; /* (rounded-md) */
+    --radius-xs: 0.25rem; /* (rounded-sm) */
+
+    /* 元の個別定義も残しておくが、上記変数で代替していく */
+    --brand-primary: 251, 146, 60;
+    --brand-secondary: 52, 211, 153;
+    --brand-accent: 250, 204, 21;
+    --bg-light-primary: 249, 250, 251;
+    --bg-light-secondary: 255, 255, 255;
+    --bg-light-tertiary: 229, 231, 235;
+    --text-light-primary: 31, 41, 55;
+    --text-light-secondary: 75, 85, 99;
+    --text-light-muted: 156, 163, 175;
+    --border-light-primary: 209, 213, 219;
+    --border-light-secondary: 229, 231, 235;
+  }
+
+  .dark { /* ダークテーマ用の変数を定義 */
+    --background: 10, 10, 10;        /* かなり暗いグレー/ほぼ黒 */
+    --foreground: 229, 231, 235;      
+
+    /* カード背景を少し明るくし、内側シャドウで奥行き感を出すことを想定 */
+    --card: 23, 23, 23;             /* very-dark-gray (例: #171717) */
+    --card-foreground: 229, 231, 235; 
+
+    --popover: 31, 41, 55;
+    --popover-foreground: 229, 231, 235;
+
+    /* プライマリカラーをVercel風の白/黒に近づける */
+    --primary: 250, 250, 250; /* almost white (例: #fafafa) */
+    --primary-foreground: 10, 10, 10; /* almost black (カード背景より暗く) */
+
+    --secondary: 55, 65, 81;  /* gray-700 */
+    --secondary-foreground: 229, 231, 235; 
+
+    --muted: 55, 65, 81;            
+    --muted-foreground: 156, 163, 175;   
+
+    --accent: 70, 70, 70; /* ダークテーマでのアクセントは抑えめに */
+    --accent-foreground: 229, 231, 235;    
+    
+    --destructive: 153, 27, 27;       
+    --destructive-foreground: 229, 231, 235; 
+
+    --border: 40, 40, 40;           /* さらに暗いボーダー (例: #282828) */
+    --input: 30, 30, 30;            /* 入力フィールドの背景 (例: #1e1e1e) */
+    --ring: 200, 200, 200; /* リングの色も白っぽく */
+
+    /* ダークテーマではライトテーマ用の変数は使わないか、意図的に上書きする */
+    --text-light-primary: 229, 231, 235; /* 上書き例: ダークテーマでのデフォルト文字色 */
+    --text-light-secondary: 156, 163, 175; /* 上書き例: ダークテーマでのセカンダリ文字色 */
+    --text-light-muted: 107, 114, 128; /* 上書き例: ダークテーマでのmuted文字色 */
+
+    --bg-light-primary: 17, 24, 39; /* 上書き例: ダークテーマでのデフォルト背景色 */
+    --bg-light-secondary: 31, 41, 55; /* 上書き例: ダークテーマでのセカンダリ背景色 */
+  }
+
+  /* body のスタイルをテーマによって変更 */
+  body {
+    @apply bg-[rgb(var(--background))] text-[rgb(var(--foreground))];
+  }
+  /* .dark スコープ内の body スタイルは上記でTailwindのapply経由で設定されるので不要かも */
+  /* .dark body { ... } */
+  
+   /* 見出しの色もテーマ追従 */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-[rgb(var(--foreground))];
+  }
 }

@@ -142,10 +142,13 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     if (!socket || !myPeerId) return; // Ensure myPeerId is available
 
-    socket.on('user-joined', ({ userId: newPeerId, roomId }: { userId: string, roomId: string }) => {
-      if (newPeerId !== myPeerId) {
-        console.log(`User ${newPeerId} joined room ${roomId}. ${myPeerId} creating peer (I am initiator).`);
-        createPeer(newPeerId, true);
+    socket.on('user_joined_session', ({ userId: newPeerId, sessionId }: { userId: string, sessionId: string }) => {
+      console.log(`ユーザー参加 (Peer ID): ${newPeerId}, Session ID: ${sessionId}`);
+      if (!peers[newPeerId] && newPeerId !== socket.id) {
+        console.log(`新しいPeer ${newPeerId} への接続を開始します...`);
+        const peer = createPeer(newPeerId, socket.id);
+        setPeers(prevPeers => ({ ...prevPeers, [newPeerId]: peer }));
+        peer.peer?.negotiate(); // シグナルを送信して接続を開始
       }
     });
 
@@ -165,12 +168,11 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
     });
 
-    socket.on('user-left', ({ userId: departingPeerId, roomId }: { userId: string, roomId: string}) => {
-      if (departingPeerId !== myPeerId) {
-        console.log(`User ${departingPeerId} left room ${roomId}. Cleaning up peer at ${myPeerId}.`);
-        if (peers[departingPeerId]) {
-          peers[departingPeerId].destroy();
-        }
+    socket.on('user_left_session', ({ userId: departingPeerId, sessionId }: { userId: string, sessionId: string}) => {
+      console.log(`ユーザー退出 (Peer ID): ${departingPeerId}, Session ID: ${sessionId}`);
+      if (peers[departingPeerId]) {
+        console.log(`Peer ${departingPeerId} との接続をクローズします...`);
+        peers[departingPeerId].destroy();
         setRemoteStreams(prev => {
           const { [departingPeerId]: _, ...rest } = prev;
           return rest;
@@ -183,9 +185,12 @@ export const WebRTCProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
 
     return () => {
-      socket.off('user-joined');
+      socket.off('user_joined_session');
       socket.off('signal');
-      socket.off('user-left');
+      socket.off('user_left_session');
+      Object.values(peers).forEach(p => p.destroy());
+      setPeers({});
+      setRemoteStreams({});
     };
   }, [socket, peers, myPeerId, createPeer]);
 

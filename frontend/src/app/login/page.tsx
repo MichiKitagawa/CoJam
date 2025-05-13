@@ -43,7 +43,7 @@ const LoginPage = () => {
         <div className="text-center">
           <Link href="/" className="inline-block mb-6">
             <span className="text-3xl font-bold next-gradient-text">
-              CoJam
+              Session
             </span>
           </Link>
           <h2 className="text-2xl font-bold text-white">アカウントにログイン</h2>

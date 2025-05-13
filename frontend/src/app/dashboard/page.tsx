@@ -15,6 +15,8 @@ import {
   PlusIcon, 
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
+import { CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const DashboardPage = () => {
   const { user } = useAuthStatus();
@@ -102,13 +104,7 @@ const DashboardPage = () => {
                     </p>
                   </div>
                   <div className="mt-auto">
-                    <button
-                      onClick={() => router.push('/rooms')}
-                      className="w-full next-button button-primary flex items-center justify-center text-sm"
-                    >
-                      ルーム一覧を見る
-                      <ArrowRightIcon className="ml-2 h-3.5 w-3.5" />
-                    </button>
+                    <Button onClick={() => router.push('/sessions')}>セッションを探す</Button>
                   </div>
                 </div>
               </div>
@@ -127,13 +123,7 @@ const DashboardPage = () => {
                     </p>
                   </div>
                   <div className="mt-auto">
-                    <button
-                      onClick={() => router.push('/rooms/create')}
-                      className="w-full next-button button-primary flex items-center justify-center text-sm"
-                    >
-                      新しいルームを作成
-                      <PlusIcon className="ml-2 h-3.5 w-3.5" />
-                    </button>
+                    <Button onClick={() => router.push('/sessions/create')}>新しいセッションを作成</Button>
                   </div>
                 </div>
               </div>

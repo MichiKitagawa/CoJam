@@ -1,13 +1,13 @@
 import User from './User';
-import Room from './Room';
 import Ticket from './Ticket';
 import Gift from './Gift';
-import RoomApplication from './RoomApplication';
 
 export {
   User,
-  Room,
   Ticket,
   Gift,
-  RoomApplication
-}; 
+};
+
+export { default as Session } from './Session';
+export { default as SessionApplication } from './SessionApplication';
+// export { default as Message } from './Message'; // Message.ts が存在しないためコメントアウト 

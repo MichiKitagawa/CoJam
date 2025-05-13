@@ -4,22 +4,13 @@ export interface SignalPayload {
   signal: any; // SDP オブジェクトまたは ICE Candidate オブジェクト
 }
 
-export interface JoinRoomPayload {
-  roomId: string;
+export interface JoinSessionPayload {
+  sessionId: string;
   userId: string;
   // role: 'speaker' | 'listener'; // 必要に応じて役割も追加
 }
 
-export interface LeaveRoomPayload {
-  roomId: string;
+export interface LeaveSessionPayload {
+  sessionId: string;
   userId: string;
-}
-
-export interface Room {
-  id: string;
-  participants: string[]; // socket.id のリスト
-}
-
-export interface Rooms {
-  [roomId: string]: Room;
 } 

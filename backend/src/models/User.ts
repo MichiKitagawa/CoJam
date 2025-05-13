@@ -1,7 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-export type UserActiveRoomRole = 'host' | 'performer' | 'viewer'; // 型エイリアスを定義
+export interface UserActiveSessionRole {
+  roomId: mongoose.Types.ObjectId;
+  role: 'host' | 'performer' | 'viewer';
+}
 
 export interface IUser extends Document {
   name: string;
@@ -9,8 +12,8 @@ export interface IUser extends Document {
   password: string;
   profileImage?: string;
   bio?: string;
-  activeRoomId?: mongoose.Types.ObjectId | null; // 追加: 現在参加中のルームID
-  activeRoomRole?: UserActiveRoomRole | null;    // 追加: 現在の役割
+  activeSessionId?: mongoose.Types.ObjectId | null;
+  activeSessionRole?: 'host' | 'performer' | 'viewer' | null;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -23,8 +26,8 @@ const UserSchema = new Schema<IUser>(
     password: { type: String, required: true },
     profileImage: { type: String },
     bio: { type: String, maxlength: 500 },
-    activeRoomId: { type: Schema.Types.ObjectId, ref: 'Room', default: null }, // 追加
-    activeRoomRole: { type: String, enum: ['host', 'performer', 'viewer', null], default: null }, // 追加
+    activeSessionId: { type: Schema.Types.ObjectId, ref: 'Session', default: null },
+    activeSessionRole: { type: String, enum: ['host', 'performer', 'viewer', null], default: null },
   },
   { timestamps: true }
 );

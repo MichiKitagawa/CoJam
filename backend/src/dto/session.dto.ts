@@ -1,6 +1,6 @@
 import { IsString, IsBoolean, IsNumber, IsOptional, IsDateString, Min, Max, IsEnum } from 'class-validator';
 
-export class CreateRoomDto {
+export class CreateSessionDto {
   @IsString()
   title: string = '';
 
@@ -32,7 +32,7 @@ export class CreateRoomDto {
   scheduledStartAt?: string;
 }
 
-export enum RoomStatus {
+export enum SessionStatus {
   SCHEDULED = 'scheduled',
   READY = 'ready',
   LIVE = 'live',
@@ -44,10 +44,10 @@ export enum SortOrder {
   DESC = 'desc',
 }
 
-export class GetRoomsQueryDto {
+export class GetSessionsQueryDto {
   @IsOptional()
-  @IsEnum(RoomStatus)
-  status?: RoomStatus;
+  @IsEnum(SessionStatus)
+  status?: SessionStatus;
 
   @IsOptional()
   @IsString()
@@ -72,9 +72,9 @@ export class GetRoomsQueryDto {
   limit?: number = 10;
 }
 
-export class JoinRoomDto {
+export class JoinSessionDto {
   @IsString()
-  roomId: string = '';
+  sessionId: string = '';
 
   @IsString()
   @IsOptional()

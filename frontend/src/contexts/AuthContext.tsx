@@ -4,6 +4,11 @@ import { useRouter } from 'next/navigation';
 import { AuthState, LoginCredentials, RegisterData, User } from '../types/auth';
 import authService from '../services/authService';
 
+// ステートインターフェースの拡張
+interface ExtendedAuthState extends AuthState {
+  authLoading: boolean;
+}
+
 // アクションタイプ
 type AuthAction =
   | { type: 'LOGIN_REQUEST' }
@@ -13,18 +18,20 @@ type AuthAction =
   | { type: 'REGISTER_SUCCESS'; payload: User }
   | { type: 'REGISTER_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'SET_AUTH_LOADING'; payload: boolean };
 
 // 初期状態
-const initialState: AuthState = {
+const initialState: ExtendedAuthState = {
   isAuthenticated: false,
   user: null,
   loading: false,
-  error: null
+  error: null,
+  authLoading: true
 };
 
 // リデューサー
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
+const authReducer = (state: ExtendedAuthState, action: AuthAction): ExtendedAuthState => {
   switch (action.type) {
     case 'LOGIN_REQUEST':
     case 'REGISTER_REQUEST':
@@ -40,6 +47,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: true,
         user: action.payload,
         loading: false,
+        authLoading: false,
         error: null
       };
     case 'LOGIN_FAILURE':
@@ -49,16 +57,23 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         user: null,
         loading: false,
+        authLoading: false,
         error: action.payload
       };
     case 'LOGOUT':
       return {
-        ...initialState
+        ...initialState,
+        authLoading: false
       };
     case 'CLEAR_ERROR':
       return {
         ...state,
         error: null
+      };
+    case 'SET_AUTH_LOADING':
+      return {
+        ...state,
+        authLoading: action.payload
       };
     default:
       return state;
@@ -67,7 +82,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 // コンテキストインターフェース
 interface AuthContextProps {
-  state: AuthState;
+  state: ExtendedAuthState;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
@@ -87,6 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem('token');
     if (token) {
       loadUser();
+    } else {
+      dispatch({ type: 'SET_AUTH_LOADING', payload: false });
     }
   }, []);
 
@@ -108,7 +125,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await authService.login(credentials);
       localStorage.setItem('token', data.token);
       dispatch({ type: 'LOGIN_SUCCESS', payload: data.user });
-      router.push('/dashboard');
+
+      // リダイレクト処理: URLクエリからredirectを取得
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectPath = urlParams.get('redirect');
+
+      // redirectがあればそこへ、なければ/dashboardへ遷移
+      router.push(redirectPath || '/dashboard');
+      
     } catch (error: any) {
       dispatch({
         type: 'LOGIN_FAILURE',

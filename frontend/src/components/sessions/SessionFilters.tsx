@@ -1,13 +1,14 @@
 import React from 'react';
-import { RoomQueryParams } from '../../services/roomService';
+// import { RoomQueryParams } from '../../services/roomService'; // 旧パス
+import { SessionQueryParams } from '../../services/sessionService'; // ★ 新パス・新インターフェース名
 import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
-interface RoomFiltersProps {
-  filters: RoomQueryParams;
-  onFilterChange: (filters: Partial<RoomQueryParams>) => void;
+interface SessionFiltersProps { // ★ RoomFiltersProps -> SessionFiltersProps
+  filters: SessionQueryParams; // ★ RoomQueryParams -> SessionQueryParams
+  onFilterChange: (filters: Partial<SessionQueryParams>) => void;
 }
 
-const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFilterChange }) => {
+const SessionFilters: React.FC<SessionFiltersProps> = ({ filters, onFilterChange }) => { // ★ RoomFilters -> SessionFilters
   // 検索入力のハンドラー
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFilterChange({ search: e.target.value });
@@ -48,7 +49,7 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFilterChange }) =>
               type="text"
               value={filters.search || ''}
               onChange={handleSearchChange}
-              placeholder="ルーム名、ホスト名などで検索..."
+              placeholder="セッション名、ホスト名などで検索..." // ★ ルーム -> セッション
               className="w-full py-2.5 pl-10 pr-3 input-dark text-sm rounded-lg"
             />
           </div>
@@ -96,4 +97,4 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({ filters, onFilterChange }) =>
   );
 };
 
-export default RoomFilters; 
+export default SessionFilters; // ★ RoomFilters -> SessionFilters 

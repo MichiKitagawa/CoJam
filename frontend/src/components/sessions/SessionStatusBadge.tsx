@@ -1,14 +1,14 @@
 import React from 'react';
 import { formatDate } from '../../utils/dateFormatter';
 
-interface RoomStatusBadgeProps {
+interface SessionStatusBadgeProps {
   status: 'scheduled' | 'ready' | 'live' | 'ended';
   scheduledStartAt?: string | Date;
   size?: 'sm' | 'md';
   className?: string;
 }
 
-const RoomStatusBadge: React.FC<RoomStatusBadgeProps> = ({ status, scheduledStartAt, size = 'md', className = '' }) => {
+const SessionStatusBadge: React.FC<SessionStatusBadgeProps> = ({ status, scheduledStartAt, size = 'md', className = '' }) => {
   const sizeClasses = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-2.5 py-1';
   let badgeStyles = '';
   let content = <></>;
@@ -62,4 +62,4 @@ const RoomStatusBadge: React.FC<RoomStatusBadgeProps> = ({ status, scheduledStar
   return <span className={badgeStyles}>{content}</span>;
 };
 
-export default RoomStatusBadge; 
+export default SessionStatusBadge; 
